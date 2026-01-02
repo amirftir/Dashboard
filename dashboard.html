@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Center — Amir's Operating System</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #161618;
+            --bg-hover: #1c1c1f;
+            --border: #2a2a2e;
+            --border-light: #3a3a3f;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --text-muted: #555;
+            --accent-gold: #d4a853;
+            --accent-gold-dim: #a68a3a;
+            --accent-green: #4ade80;
+            --accent-green-dim: #22c55e;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+            --accent-blue: #60a5fa;
+            --accent-purple: #a78bfa;
+            --gradient-gold: linear-gradient(135deg, #d4a853 0%, #b8943a 100%);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 40px rgba(212, 168, 83, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Subtle grain texture */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 4px;
+        }
+
+        .header-left .subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .stat-block {
+            text-align: right;
+        }
+
+        .stat-block .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .stat-block .value {
+            font-size: 24px;
+            font-weight: 600;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .stat-block .value.gold { color: var(--accent-gold); }
+        .stat-block .value.green { color: var(--accent-green); }
+
+        .level-badge {
+            background: var(--gradient-gold);
+            color: var(--bg-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Section styling */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .section-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        /* Projects */
+        .projects-section {
+            grid-column: 1 / -1;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 1024px) {
+            .projects-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .project-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .project-card.expanded {
+            background: var(--bg-hover);
+        }
+
+        .project-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .project-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .project-phase {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 16px;
+        }
+
+        .phase-bar {
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .phase-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        .phase-fill.agency { background: var(--accent-gold); width: 10%; }
+        .phase-fill.iran { background: var(--accent-green); width: 85%; }
+        .phase-fill.airbnb { background: var(--accent-blue); width: 15%; }
+        .phase-fill.family { background: var(--accent-purple); width: 10%; }
+
+        .project-status {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .project-next {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        .project-next .label {
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .project-next .action {
+            color: var(--accent-gold);
+        }
+
+        /* Habits Section */
+        .habits-grid {
+            display: grid;
+            gap: 8px;
+        }
+
+        .habit-row {
+            display: grid;
+            grid-template-columns: 140px repeat(7, 1fr) 60px;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .habit-row:last-child {
+            border-bottom: none;
+        }
+
+        .habit-name {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .habit-day {
+            display: flex;
+            justify-content: center;
+        }
+
+        .habit-score {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-family: 'IBM Plex Mono', monospace;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--text-muted);
+        }
+
+        .habit-score:hover {
+            border-color: var(--border-light);
+        }
+
+        .habit-score.score-1 { background: #1a1a1a; color: var(--text-muted); }
+        .habit-score.score-2 { background: #1f1a1a; color: var(--accent-red); border-color: var(--accent-red); opacity: 0.6; }
+        .habit-score.score-3 { background: #1f1c1a; color: var(--accent-yellow); border-color: var(--accent-yellow); opacity: 0.7; }
+        .habit-score.score-4 { background: #1a1f1a; color: var(--accent-green); border-color: var(--accent-green); opacity: 0.8; }
+        .habit-score.score-5 { background: #1a1f1a; color: var(--accent-green); border-color: var(--accent-green); box-shadow: 0 0 8px rgba(74, 222, 128, 0.3); }
+
+        .habit-avg {
+            text-align: center;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .habit-avg.good { color: var(--accent-green); }
+        .habit-avg.medium { color: var(--accent-yellow); }
+        .habit-avg.low { color: var(--accent-red); }
+
+        .days-header {
+            display: grid;
+            grid-template-columns: 140px repeat(7, 1fr) 60px;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .day-label {
+            text-align: center;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+        }
+
+        .day-label.today {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        /* Momentum Section */
+        .momentum-section {
+            grid-column: 1 / -1;
+        }
+
+        .momentum-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .momentum-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .momentum-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .momentum-card .big-number {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: 'IBM Plex Mono', monospace;
+            margin-bottom: 4px;
+        }
+
+        .momentum-card .big-number.gold { color: var(--accent-gold); }
+        .momentum-card .big-number.green { color: var(--accent-green); }
+        .momentum-card .big-number.blue { color: var(--accent-blue); }
+
+        .momentum-card .card-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+        }
+
+        .momentum-card .trend {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .trend.up { color: var(--accent-green); }
+        .trend.down { color: var(--accent-red); }
+        .trend.stable { color: var(--text-muted); }
+
+        /* XP Bar */
+        .xp-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .xp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .xp-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .xp-value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            color: var(--accent-gold);
+        }
+
+        .xp-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: var(--gradient-gold);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .level-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .quick-btn {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .quick-btn.primary {
+            background: var(--gradient-gold);
+            border: none;
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .quick-btn.primary:hover {
+            opacity: 0.9;
+        }
+
+        /* Week Navigation */
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .week-nav button {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-size: 16px;
+        }
+
+        .week-nav button:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .week-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        .footer .persian {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section {
+            animation: fadeIn 0.4s ease;
+        }
+
+        .projects-section { animation-delay: 0.1s; }
+        .habits-section { animation-delay: 0.2s; }
+        .momentum-section { animation-delay: 0.3s; }
+
+        /* Score modal */
+        .score-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-modal.active {
+            display: flex;
+        }
+
+        .score-picker {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .score-picker h3 {
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .score-options {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .score-option {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .score-option:hover {
+            transform: scale(1.1);
+        }
+
+        .score-option.s1:hover { border-color: var(--text-muted); }
+        .score-option.s2:hover { border-color: var(--accent-red); }
+        .score-option.s3:hover { border-color: var(--accent-yellow); }
+        .score-option.s4:hover { border-color: var(--accent-green); }
+        .score-option.s5:hover { border-color: var(--accent-green); box-shadow: 0 0 12px rgba(74, 222, 128, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Command Center</h1>
+                <div class="subtitle">Week of <span id="weekLabel">Dec 30, 2025 — Jan 5, 2026</span></div>
+            </div>
+            <div class="header-right">
+                <div class="stat-block">
+                    <div class="label">Momentum</div>
+                    <div class="value green" id="momentumValue">—%</div>
+                </div>
+                <div class="stat-block">
+                    <div class="label">Total XP</div>
+                    <div class="value gold" id="totalXP">0</div>
+                </div>
+                <div class="level-badge" id="levelBadge">Level 1</div>
+            </div>
+        </header>
+
+        <!-- Projects Section -->
+        <section class="section projects-section">
+            <div class="section-header">
+                <div class="section-title">Active Projects</div>
+                <div class="section-meta">4 projects tracked</div>
+            </div>
+            <div class="projects-grid">
+                <!-- Agency -->
+                <div class="project-card" data-project="agency">
+                    <div class="project-icon">🏢</div>
+                    <div class="project-name">Agency</div>
+                    <div class="project-phase">Phase 0 of 5</div>
+                    <div class="phase-bar"><div class="phase-fill agency"></div></div>
+                    <div class="project-status">Foundation — Building pipeline, systems ready</div>
+                    <div class="project-next">
+                        <div class="label">Next Action</div>
+                        <div class="action">BNI: Attend Tuesday + Book 3 one-to-ones</div>
+                    </div>
+                </div>
+
+                <!-- Iran -->
+                <div class="project-card" data-project="iran">
+                    <div class="project-icon">🇮🇷</div>
+                    <div class="project-name">Iran Healthcare</div>
+                    <div class="project-phase">Systematized</div>
+                    <div class="phase-bar"><div class="phase-fill iran"></div></div>
+                    <div class="project-status">Running smooth — 2 items need attention</div>
+                    <div class="project-next">
+                        <div class="label">Priority Focus</div>
+                        <div class="action">Pardis Website + QEEG Licensing</div>
+                    </div>
+                </div>
+
+                <!-- Airbnb -->
+                <div class="project-card" data-project="airbnb">
+                    <div class="project-icon">🏠</div>
+                    <div class="project-name">Airbnb Cashflow</div>
+                    <div class="project-phase">Phase 1 of 4</div>
+                    <div class="phase-bar"><div class="phase-fill airbnb"></div></div>
+                    <div class="project-status">Get Visibility — Need financial clarity</div>
+                    <div class="project-next">
+                        <div class="label">Next Action</div>
+                        <div class="action">Organize PM reports into one folder</div>
+                    </div>
+                </div>
+
+                <!-- Family -->
+                <div class="project-card" data-project="family">
+                    <div class="project-icon">👨‍👩‍👧‍👦</div>
+                    <div class="project-name">Family Command</div>
+                    <div class="project-phase">Phase 1 of 5</div>
+                    <div class="phase-bar"><div class="phase-fill family"></div></div>
+                    <div class="project-status">Inventory & Gather — Docs for family of 4</div>
+                    <div class="project-next">
+                        <div class="label">Next Action</div>
+                        <div class="action">15-min pile: collect all papers</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Grid: Habits + Stats -->
+        <div class="main-grid">
+            <!-- Habits Section -->
+            <section class="section habits-section" style="grid-column: 1 / -1;">
+                <div class="section-header">
+                    <div class="section-title">Weekly Habits</div>
+                    <div class="week-nav">
+                        <button id="prevWeek">←</button>
+                        <span class="week-label" id="weekNavLabel">This Week</span>
+                        <button id="nextWeek">→</button>
+                    </div>
+                </div>
+                
+                <div class="days-header">
+                    <div></div>
+                    <div class="day-label" id="day0">Mon</div>
+                    <div class="day-label" id="day1">Tue</div>
+                    <div class="day-label" id="day2">Wed</div>
+                    <div class="day-label" id="day3">Thu</div>
+                    <div class="day-label" id="day4">Fri</div>
+                    <div class="day-label" id="day5">Sat</div>
+                    <div class="day-label" id="day6">Sun</div>
+                    <div class="day-label">Avg</div>
+                </div>
+
+                <div class="habits-grid" id="habitsGrid">
+                    <!-- Habits will be generated by JS -->
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-btn" id="clearWeek">Clear Week</button>
+                    <button class="quick-btn" id="exportData">Export Data</button>
+                    <button class="quick-btn primary" id="todayCheckin">Today's Check-in</button>
+                </div>
+            </section>
+
+            <!-- Momentum Section -->
+            <section class="section momentum-section">
+                <div class="section-header">
+                    <div class="section-title">Momentum Metrics</div>
+                    <div class="section-meta">Updated live</div>
+                </div>
+                
+                <div class="momentum-grid">
+                    <div class="momentum-card">
+                        <div class="big-number green" id="weekMomentum">0%</div>
+                        <div class="card-label">Weekly Momentum</div>
+                        <div class="trend stable" id="weekTrend">→ Stable</div>
+                    </div>
+                    <div class="momentum-card">
+                        <div class="big-number gold" id="weekXP">0</div>
+                        <div class="card-label">XP This Week</div>
+                        <div class="trend" id="xpTrend">From habits + check-ins</div>
+                    </div>
+                    <div class="momentum-card">
+                        <div class="big-number blue" id="daysTracked">0</div>
+                        <div class="card-label">Days Tracked</div>
+                        <div class="trend" id="trackingStreak">Keep going</div>
+                    </div>
+                </div>
+
+                <div class="xp-section">
+                    <div class="xp-header">
+                        <span class="xp-label">Progress to Next Level</span>
+                        <span class="xp-value" id="xpProgress">0 / 100 XP</span>
+                    </div>
+                    <div class="xp-bar">
+                        <div class="xp-fill" id="xpFill" style="width: 0%"></div>
+                    </div>
+                    <div class="level-progress">
+                        <span id="currentLevelLabel">Level 1: Starting</span>
+                        <span id="nextLevelLabel">Next: Level 2</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="persian">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            <div>Command Center v1.0 — Built for focused execution</div>
+        </footer>
+    </div>
+
+    <!-- Score Modal -->
+    <div class="score-modal" id="scoreModal">
+        <div class="score-picker">
+            <h3 id="scoreHabitName">Habit Name</h3>
+            <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 16px;">1 = thought about it • 3 = did minimum • 5 = crushed it</p>
+            <div class="score-options">
+                <button class="score-option s1" data-score="1">1</button>
+                <button class="score-option s2" data-score="2">2</button>
+                <button class="score-option s3" data-score="3">3</button>
+                <button class="score-option s4" data-score="4">4</button>
+                <button class="score-option s5" data-score="5">5</button>
+            </div>
+            <button style="margin-top: 16px; background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 8px 16px; border-radius: 6px; cursor: pointer;" id="closeModal">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Habits configuration
+        const habits = [
+            { id: 'supplements', name: 'Supplements', frequency: 'daily' },
+            { id: 'gym', name: 'Gym', frequency: '4x/week' },
+            { id: 'cold', name: 'Cold Exposure', frequency: 'daily' },
+            { id: 'pray', name: 'Pray', frequency: 'daily' },
+            { id: 'journal', name: 'Journal', frequency: 'daily' },
+            { id: 'gratitude', name: 'Gratitude', frequency: 'daily' },
+            { id: 'read', name: 'Read', frequency: 'daily' },
+            { id: 'monkmode', name: '4h Monk Mode', frequency: 'daily' },
+            { id: 'nofap', name: 'NoFap', frequency: 'daily' }
+        ];
+
+        // Level configuration
+        const levels = [
+            { level: 1, name: 'Starting', minXP: 0, maxXP: 99 },
+            { level: 2, name: 'Building Momentum', minXP: 100, maxXP: 249 },
+            { level: 3, name: 'In The Flow', minXP: 250, maxXP: 499 },
+            { level: 4, name: 'Systematic', minXP: 500, maxXP: 999 },
+            { level: 5, name: 'Operating System Online', minXP: 1000, maxXP: Infinity }
+        ];
+
+        // State
+        let currentWeekOffset = 0;
+        let habitData = {};
+        let totalXP = 0;
+
+        // Load from localStorage
+        function loadData() {
+            const saved = localStorage.getItem('commandCenterData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                habitData = data.habitData || {};
+                totalXP = data.totalXP || 0;
+            }
+        }
+
+        // Save to localStorage
+        function saveData() {
+            localStorage.setItem('commandCenterData', JSON.stringify({
+                habitData,
+                totalXP
+            }));
+        }
+
+        // Get week key
+        function getWeekKey(offset = 0) {
+            const now = new Date();
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - now.getDay() + 1 + (offset * 7));
+            return monday.toISOString().split('T')[0];
+        }
+
+        // Get week label
+        function getWeekLabel(offset = 0) {
+            const now = new Date();
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - now.getDay() + 1 + (offset * 7));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            
+            const formatDate = (d) => {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+            };
+            
+            return `${formatDate(monday)} — ${formatDate(sunday)}`;
+        }
+
+        // Get today's index (0 = Monday, 6 = Sunday)
+        function getTodayIndex() {
+            const day = new Date().getDay();
+            return day === 0 ? 6 : day - 1;
+        }
+
+        // Render habits grid
+        function renderHabits() {
+            const grid = document.getElementById('habitsGrid');
+            const weekKey = getWeekKey(currentWeekOffset);
+            const todayIndex = currentWeekOffset === 0 ? getTodayIndex() : -1;
+            
+            grid.innerHTML = habits.map(habit => {
+                const scores = [];
+                let sum = 0;
+                let count = 0;
+                
+                for (let i = 0; i < 7; i++) {
+                    const key = `${weekKey}-${i}-${habit.id}`;
+                    const score = habitData[key];
+                    scores.push(score);
+                    if (score) {
+                        sum += score;
+                        count++;
+                    }
+                }
+                
+                const avg = count > 0 ? (sum / count).toFixed(1) : '—';
+                const avgClass = avg === '—' ? '' : (avg >= 4 ? 'good' : avg >= 3 ? 'medium' : 'low');
+                
+                return `
+                    <div class="habit-row">
+                        <div class="habit-name">${habit.name}</div>
+                        ${scores.map((score, i) => `
+                            <div class="habit-day">
+                                <div class="habit-score ${score ? 'score-' + score : ''} ${i === todayIndex ? 'today' : ''}"
+                                     data-habit="${habit.id}" data-day="${i}" data-week="${weekKey}">
+                                    ${score || '·'}
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div class="habit-avg ${avgClass}">${avg}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.habit-score').forEach(el => {
+                el.addEventListener('click', () => {
+                    openScoreModal(el.dataset.habit, el.dataset.day, el.dataset.week);
+                });
+            });
+
+            // Update day headers
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            for (let i = 0; i < 7; i++) {
+                const dayEl = document.getElementById(`day${i}`);
+                dayEl.textContent = dayNames[i];
+                dayEl.classList.toggle('today', i === todayIndex && currentWeekOffset === 0);
+            }
+        }
+
+        // Score modal
+        let currentScoreTarget = null;
+
+        function openScoreModal(habitId, day, week) {
+            const habit = habits.find(h => h.id === habitId);
+            document.getElementById('scoreHabitName').textContent = habit.name;
+            document.getElementById('scoreModal').classList.add('active');
+            currentScoreTarget = { habitId, day, week };
+        }
+
+        function closeScoreModal() {
+            document.getElementById('scoreModal').classList.remove('active');
+            currentScoreTarget = null;
+        }
+
+        document.getElementById('closeModal').addEventListener('click', closeScoreModal);
+        document.getElementById('scoreModal').addEventListener('click', (e) => {
+            if (e.target.id === 'scoreModal') closeScoreModal();
+        });
+
+        document.querySelectorAll('.score-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!currentScoreTarget) return;
+                
+                const { habitId, day, week } = currentScoreTarget;
+                const key = `${week}-${day}-${habitId}`;
+                const oldScore = habitData[key] || 0;
+                const newScore = parseInt(btn.dataset.score);
+                
+                habitData[key] = newScore;
+                
+                // Calculate XP change
+                const xpGain = newScore >= 3 ? 2 : 0;
+                const xpBonus = newScore === 5 ? 3 : 0;
+                const oldXP = oldScore >= 3 ? 2 : 0;
+                const oldBonus = oldScore === 5 ? 3 : 0;
+                
+                totalXP += (xpGain + xpBonus) - (oldXP + oldBonus);
+                
+                saveData();
+                renderHabits();
+                updateStats();
+                closeScoreModal();
+            });
+        });
+
+        // Update statistics
+        function updateStats() {
+            const weekKey = getWeekKey(currentWeekOffset);
+            
+            // Calculate weekly momentum
+            let totalPossible = 0;
+            let totalAchieved = 0;
+            let daysWithData = 0;
+            let weekXP = 0;
+            
+            for (let day = 0; day < 7; day++) {
+                let dayHasData = false;
+                habits.forEach(habit => {
+                    const key = `${weekKey}-${day}-${habit.id}`;
+                    const score = habitData[key];
+                    if (score) {
+                        dayHasData = true;
+                        totalAchieved += score;
+                        totalPossible += 5;
+                        weekXP += score >= 3 ? 2 : 0;
+                        weekXP += score === 5 ? 3 : 0;
+                    }
+                });
+                if (dayHasData) daysWithData++;
+            }
+            
+            const momentum = totalPossible > 0 ? Math.round((totalAchieved / totalPossible) * 100) : 0;
+            
+            // Update UI
+            document.getElementById('weekMomentum').textContent = `${momentum}%`;
+            document.getElementById('momentumValue').textContent = `${momentum}%`;
+            document.getElementById('weekXP').textContent = weekXP;
+            document.getElementById('daysTracked').textContent = daysWithData;
+            document.getElementById('totalXP').textContent = totalXP;
+            
+            // Update level
+            const currentLevel = levels.find(l => totalXP >= l.minXP && totalXP <= l.maxXP) || levels[0];
+            const nextLevel = levels.find(l => l.level === currentLevel.level + 1);
+            
+            document.getElementById('levelBadge').textContent = `Level ${currentLevel.level}`;
+            document.getElementById('currentLevelLabel').textContent = `Level ${currentLevel.level}: ${currentLevel.name}`;
+            
+            if (nextLevel) {
+                const progress = ((totalXP - currentLevel.minXP) / (currentLevel.maxXP - currentLevel.minXP + 1)) * 100;
+                document.getElementById('xpFill').style.width = `${Math.min(progress, 100)}%`;
+                document.getElementById('xpProgress').textContent = `${totalXP} / ${currentLevel.maxXP + 1} XP`;
+                document.getElementById('nextLevelLabel').textContent = `Next: Level ${nextLevel.level}`;
+            } else {
+                document.getElementById('xpFill').style.width = '100%';
+                document.getElementById('xpProgress').textContent = `${totalXP} XP — MAX LEVEL`;
+                document.getElementById('nextLevelLabel').textContent = 'Operating at full capacity';
+            }
+            
+            // Week label
+            document.getElementById('weekLabel').textContent = getWeekLabel(currentWeekOffset);
+            document.getElementById('weekNavLabel').textContent = currentWeekOffset === 0 ? 'This Week' : 
+                currentWeekOffset === -1 ? 'Last Week' : `${Math.abs(currentWeekOffset)} weeks ${currentWeekOffset < 0 ? 'ago' : 'ahead'}`;
+        }
+
+        // Week navigation
+        document.getElementById('prevWeek').addEventListener('click', () => {
+            currentWeekOffset--;
+            renderHabits();
+            updateStats();
+        });
+
+        document.getElementById('nextWeek').addEventListener('click', () => {
+            if (currentWeekOffset < 0) {
+                currentWeekOffset++;
+                renderHabits();
+                updateStats();
+            }
+        });
+
+        // Today's check-in
+        document.getElementById('todayCheckin').addEventListener('click', () => {
+            currentWeekOffset = 0;
+            renderHabits();
+            updateStats();
+            
+            // Auto-open first empty habit for today
+            const todayIndex = getTodayIndex();
+            const weekKey = getWeekKey(0);
+            const firstEmpty = habits.find(h => !habitData[`${weekKey}-${todayIndex}-${h.id}`]);
+            if (firstEmpty) {
+                openScoreModal(firstEmpty.id, todayIndex, weekKey);
+            }
+        });
+
+        // Clear week
+        document.getElementById('clearWeek').addEventListener('click', () => {
+            if (confirm('Clear all data for this week? This cannot be undone.')) {
+                const weekKey = getWeekKey(currentWeekOffset);
+                Object.keys(habitData).forEach(key => {
+                    if (key.startsWith(weekKey)) {
+                        delete habitData[key];
+                    }
+                });
+                saveData();
+                renderHabits();
+                updateStats();
+            }
+        });
+
+        // Export data
+        document.getElementById('exportData').addEventListener('click', () => {
+            const dataStr = JSON.stringify({ habitData, totalXP }, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `command-center-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+        });
+
+        // Initialize
+        loadData();
+        renderHabits();
+        updateStats();
+    </script>
+</body>
+</html>
