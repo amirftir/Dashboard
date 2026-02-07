@@ -2,101 +2,54 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import ChatHeader from './components/ChatHeader';
 import ChatMessages from './components/ChatMessages';
 import ChatInput from './components/ChatInput';
-import { SYSTEM_PROMPT } from './utils/systemPrompt';
+import { ConversationEngine } from './utils/conversationEngine';
 import './App.css';
 
 function App() {
   const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [hasStarted, setHasStarted] = useState(false);
+  const engineRef = useRef(null);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const startConversation = useCallback(async () => {
+  const startConversation = useCallback(() => {
     if (hasStarted) return;
+    const engine = new ConversationEngine();
+    engineRef.current = engine;
+    const greeting = engine.getInitialMessage();
+    setMessages([{ role: 'assistant', content: greeting }]);
     setHasStarted(true);
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemPrompt: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: 'سلام' }],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to connect to server');
-      }
-
-      const data = await response.json();
-      setMessages([
-        { role: 'user', content: 'سلام', hidden: true },
-        { role: 'assistant', content: data.message },
-      ]);
-    } catch (err) {
-      setError('خطا در اتصال به سرور. لطفاً دوباره تلاش کنید.');
-      setHasStarted(false);
-    } finally {
-      setIsLoading(false);
-    }
   }, [hasStarted]);
 
-  const sendMessage = useCallback(async (text) => {
-    if (!text.trim() || isLoading) return;
+  const sendMessage = useCallback((text) => {
+    if (!text.trim() || !engineRef.current) return;
 
     const userMessage = { role: 'user', content: text.trim() };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    setIsLoading(true);
-    setError(null);
+    setMessages((prev) => [...prev, userMessage]);
 
-    try {
-      const apiMessages = updatedMessages
-        .filter((m) => !m.hidden || m.role === 'user')
-        .map((m) => ({ role: m.role, content: m.content }));
-
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemPrompt: SYSTEM_PROMPT,
-          messages: apiMessages,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
+    // Small delay to show the user message first
+    setTimeout(() => {
+      const response = engineRef.current.processInput(text.trim());
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: data.message },
+        { role: 'assistant', content: response },
       ]);
-    } catch (err) {
-      setError('خطا در دریافت پاسخ. لطفاً دوباره تلاش کنید.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [messages, isLoading]);
+    }, 300);
+  }, []);
 
   const resetChat = useCallback(() => {
     setMessages([]);
     setHasStarted(false);
-    setError(null);
-    setIsLoading(false);
+    engineRef.current = null;
   }, []);
 
   return (
@@ -122,16 +75,10 @@ function App() {
           <>
             <ChatMessages
               messages={messages}
-              isLoading={isLoading}
+              isLoading={false}
               messagesEndRef={messagesEndRef}
             />
-            {error && (
-              <div className="error-bar">
-                <span>{error}</span>
-                <button onClick={() => setError(null)}>×</button>
-              </div>
-            )}
-            <ChatInput onSend={sendMessage} isLoading={isLoading} />
+            <ChatInput onSend={sendMessage} isLoading={false} />
           </>
         )}
       </div>
