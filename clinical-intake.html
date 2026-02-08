@@ -155,6 +155,56 @@ body {
 .send-btn:disabled { opacity:0.3; cursor:not-allowed; }
 .send-btn svg { width:20px; height:20px; }
 
+/* Action buttons */
+.actions-bar {
+  display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.8rem 1rem;
+  background:var(--bg-secondary); border-top:1px solid var(--border);
+  justify-content:center; flex-shrink:0;
+}
+.action-btn {
+  background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border);
+  padding:0.5rem 1rem; font-size:0.85rem; font-family:inherit;
+  border-radius:var(--radius-sm); cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; gap:0.4rem;
+}
+.action-btn:hover { background:var(--bg-hover); border-color:var(--accent-dim); }
+.action-btn.primary { background:var(--accent); color:var(--bg-primary); border-color:var(--accent); font-weight:600; }
+.action-btn.primary:hover { background:var(--accent-dim); }
+
+/* Download button on report bubbles */
+.report-actions { display:flex; gap:0.4rem; margin-top:0.6rem; direction:ltr; }
+.dl-btn {
+  background:var(--accent); color:var(--bg-primary); border:none;
+  padding:0.3rem 0.8rem; font-size:0.75rem; font-family:inherit;
+  border-radius:4px; cursor:pointer; transition:all 0.2s;
+}
+.dl-btn:hover { background:var(--accent-dim); }
+
+/* Records panel */
+.records-panel {
+  position:absolute; inset:0; background:var(--bg-secondary); z-index:10;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.records-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 1.2rem; border-bottom:1px solid var(--border);
+}
+.records-header h2 { font-size:1.1rem; font-weight:600; }
+.records-list { flex:1; overflow-y:auto; padding:0.8rem; }
+.record-card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:0.8rem 1rem; margin-bottom:0.5rem;
+  cursor:pointer; transition:all 0.2s;
+}
+.record-card:hover { border-color:var(--accent-dim); }
+.record-name { font-weight:600; font-size:0.95rem; }
+.record-meta { font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem; }
+.record-btns { display:flex; gap:0.4rem; margin-top:0.5rem; }
+.no-records { text-align:center; color:var(--text-muted); padding:3rem 1rem; font-size:0.95rem; }
+
+/* Welcome buttons row */
+.welcome-btns { display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap; }
+
 .hidden { display:none !important; }
 
 @media(max-width:480px){
@@ -186,10 +236,25 @@ body {
         <div class="welcome-icon">🧠</div>
         <h2>سیستم ارزیابی بالینی TMN</h2>
         <p>به سیستم ارزیابی بالینی فناوری‌های سلامت عصبی خوش آمدید.<br>این ارزیابی حدود ۲۰ دقیقه زمان می‌برد.</p>
-        <button class="start-btn" onclick="startChat()">شروع ارزیابی</button>
+        <div class="welcome-btns">
+          <button class="start-btn" onclick="startChat()">شروع ارزیابی</button>
+          <button class="action-btn" onclick="showRecords()" id="recordsBtn" style="display:none">سوابق مراجعین</button>
+        </div>
       </div>
     </div>
     <div class="messages hidden" id="messages"></div>
+    <div class="actions-bar hidden" id="actionsBar">
+      <button class="action-btn primary" onclick="triggerClinical()">📊 گزارش بالینی (دکتر فتاحی)</button>
+      <button class="action-btn primary" onclick="triggerAdmin()">📋 گزارش اداری (آتوسا)</button>
+      <button class="action-btn" onclick="triggerReassess()">🔄 بازارزیابی</button>
+    </div>
+    <div class="records-panel hidden" id="recordsPanel">
+      <div class="records-header">
+        <h2>سوابق مراجعین</h2>
+        <button class="action-btn" onclick="hideRecords()">بستن ✕</button>
+      </div>
+      <div class="records-list" id="recordsList"></div>
+    </div>
     <div class="input-bar hidden" id="inputBar">
       <form class="input-wrap" onsubmit="handleSend(event)">
         <textarea id="inputField" placeholder="پاسخ خود را بنویسید..." rows="1" dir="rtl"></textarea>
@@ -321,10 +386,12 @@ function initData(){
 
 function process(text){
   const t=text.trim();
-  // Report codes — always check
-  if(t==='Ali - 189419') return clinicalReport();
-  if(t==='Atousa:12271227') return adminReport();
-  if((t==='بازارزیابی'||t.toLowerCase()==='reassess')&&state==='IDLE') return startReassess();
+  // Report codes — normalize for flexible matching
+  const tNorm=t.replace(/[\s\u00A0\u200C]+/g,' ').replace(/[‐‑–—―-]/g,'-');
+  const tLower=tNorm.toLowerCase();
+  if(tLower==='ali - 189419'||tLower==='ali-189419'||tLower==='ali -189419'||tNorm==='Ali - 189419') return clinicalReport();
+  if(tNorm==='Atousa:12271227'||tLower==='atousa:12271227'||tLower==='atousa: 12271227'||tLower==='atousa :12271227') return adminReport();
+  if((t==='بازارزیابی'||t==='باز ارزیابی'||tLower==='reassess'||tLower==='reassessment')&&(state==='IDLE'||data.name)) return startReassess();
 
   // Safety
   if(['خودکشی','می‌خوام بمیرم','نمی‌خوام زنده باشم'].some(w=>t.includes(w)))
@@ -448,6 +515,8 @@ function handleGroup(t){
 
 function closeAssessment(){
   state='IDLE';
+  saveClient();
+  setTimeout(()=>showActions(),300);
   return `تمام شد! 🎉\n\nخیلی ممنون ${data.first} جان که وقت گذاشتید و با دقت جواب دادید.\n\n📋 پاسخ‌های شما ثبت شد\n👨‍⚕️ دکتر فتاحی بررسی می‌کنن\n📞 نتایج و برنامه درمان بهتون اطلاع داده می‌شه\n\nاگه سوالی دارید بپرسید. مراقب خودتون باشید 💚`;
 }
 
@@ -539,11 +608,43 @@ function adminReport(){
   return r;
 }
 
+// ─── localStorage ───────────────────────────────────────
+const STORAGE_KEY='tmn_clients';
+function loadClients(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch{return[]}}
+function saveClient(){
+  const clients=loadClients();
+  const record={
+    id:Date.now(), date:new Date().toISOString(), datePersian:persianDate(),
+    name:data.name, first:data.first, phone:data.phone, age:data.age, gender:data.gender,
+    screenOK:data.screenOK, screenFails:data.screenFails,
+    complaints:data.complaints, answers:{...data.answers}, meds:data.meds, notes:data.notes,
+    prevAnswers:prevAnswers?{...prevAnswers}:null
+  };
+  // Update existing or add new
+  const existing=clients.findIndex(c=>c.phone===data.phone&&c.name===data.name);
+  if(existing>=0){record.id=clients[existing].id;clients[existing]=record;}
+  else clients.unshift(record);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(clients));
+  updateRecordsBtn();
+}
+function updateRecordsBtn(){
+  const btn=document.getElementById('recordsBtn');
+  if(btn)btn.style.display=loadClients().length>0?'inline-flex':'none';
+}
+
+function downloadText(filename,text){
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
 // ─── UI ─────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
-const msgBox=$('messages'), inputField=$('inputField'), welcomeEl=$('welcome'), inputBar=$('inputBar'), resetBtn=$('resetBtn');
+const msgBox=$('messages'), inputField=$('inputField'), welcomeEl=$('welcome'), inputBar=$('inputBar'), resetBtn=$('resetBtn'), actionsBar=$('actionsBar');
 
-function addMsg(role,text){
+function addMsg(role,text,withDownload){
   const div=document.createElement('div');
   div.className='msg '+role;
   const isReport=text.includes('═══')||text.includes('───');
@@ -552,8 +653,77 @@ function addMsg(role,text){
   const inner=document.createElement('div');
   inner.className='bubble-text';
   inner.textContent=text;
-  bubble.appendChild(inner);div.appendChild(bubble);msgBox.appendChild(div);
+  bubble.appendChild(inner);
+  if(isReport&&withDownload){
+    const actions=document.createElement('div');
+    actions.className='report-actions';
+    const dlBtn=document.createElement('button');
+    dlBtn.className='dl-btn';
+    dlBtn.textContent='📥 دانلود گزارش';
+    const reportText=text;
+    const fname=(data.name||'report')+'-'+new Date().toISOString().split('T')[0]+'.txt';
+    dlBtn.onclick=()=>downloadText(fname,reportText);
+    actions.appendChild(dlBtn);
+    bubble.appendChild(actions);
+  }
+  div.appendChild(bubble);msgBox.appendChild(div);
   msgBox.scrollTop=msgBox.scrollHeight;
+}
+
+function showActions(){actionsBar.classList.remove('hidden');}
+function hideActions(){actionsBar.classList.add('hidden');}
+
+function triggerClinical(){
+  const r=clinicalReport();
+  addMsg('assistant',r,true);
+  saveClient();
+}
+function triggerAdmin(){
+  const r=adminReport();
+  addMsg('assistant',r,true);
+  saveClient();
+}
+function triggerReassess(){
+  hideActions();
+  const r=startReassess();
+  addMsg('assistant',r);
+}
+
+// ─── Records Panel ──────────────────────────────────────
+function showRecords(){
+  const panel=$('recordsPanel');
+  const list=$('recordsList');
+  list.innerHTML='';
+  const clients=loadClients();
+  if(!clients.length){list.innerHTML='<div class="no-records">هنوز مراجعی ثبت نشده</div>';panel.classList.remove('hidden');return;}
+  clients.forEach(c=>{
+    const card=document.createElement('div');card.className='record-card';
+    const gen=c.gender==='male'?'مرد':c.gender==='female'?'زن':'';
+    const comp=(c.complaints||[]).map(x=>COMPLAINT_LABELS[x.id]||'سایر').join('، ');
+    card.innerHTML=`<div class="record-name">${c.name}</div><div class="record-meta">${c.datePersian} | سن: ${c.age} | ${gen} | ${comp}</div><div class="record-btns"></div>`;
+    const btns=card.querySelector('.record-btns');
+    const clinBtn=document.createElement('button');clinBtn.className='dl-btn';clinBtn.textContent='📊 گزارش بالینی';
+    clinBtn.onclick=(e)=>{e.stopPropagation();loadAndReport(c,'clinical')};
+    const admBtn=document.createElement('button');admBtn.className='dl-btn';admBtn.textContent='📋 گزارش اداری';
+    admBtn.onclick=(e)=>{e.stopPropagation();loadAndReport(c,'admin')};
+    btns.appendChild(clinBtn);btns.appendChild(admBtn);
+    list.appendChild(card);
+  });
+  panel.classList.remove('hidden');
+}
+function hideRecords(){$('recordsPanel').classList.add('hidden');}
+function loadAndReport(c,type){
+  // Temporarily load client data to generate report
+  const backup={...data};const backupPrev=prevAnswers;
+  data={name:c.name,first:c.first,phone:c.phone,age:c.age,gender:c.gender,
+    screenOK:c.screenOK,screenFails:c.screenFails||[],complaints:c.complaints||[],
+    compIdx:0,answers:c.answers||{},meds:c.meds||'',notes:c.notes||''};
+  prevAnswers=c.prevAnswers||null;
+  const report=type==='clinical'?clinicalReport():adminReport();
+  const fname=c.name+'-'+type+'-'+new Date().toISOString().split('T')[0]+'.txt';
+  downloadText(fname,report);
+  // Restore
+  Object.assign(data,backup);prevAnswers=backupPrev;
 }
 
 function startChat(){
@@ -561,6 +731,7 @@ function startChat(){
   welcomeEl.classList.add('hidden');
   msgBox.classList.remove('hidden');
   inputBar.classList.remove('hidden');
+  hideActions();
   resetBtn.classList.add('show');
   addMsg('assistant','سلام و خوش آمدید! 🌿\nمن دستیار ارزیابی کلینیک TMN هستم.\nلطفاً اسم کاملتون رو بگید.');
   inputField.focus();
@@ -570,9 +741,11 @@ function resetChat(){
   msgBox.innerHTML='';
   msgBox.classList.add('hidden');
   inputBar.classList.add('hidden');
+  hideActions();
   resetBtn.classList.remove('show');
   welcomeEl.classList.remove('hidden');
   state='';initData();prevAnswers=null;
+  updateRecordsBtn();
 }
 
 function handleSend(e){
@@ -583,7 +756,9 @@ function handleSend(e){
   inputField.value='';
   setTimeout(()=>{
     const resp=process(t);
-    addMsg('assistant',resp);
+    const isReport=resp.includes('═══');
+    addMsg('assistant',resp,isReport);
+    if(state==='IDLE'){showActions();saveClient();}
     inputField.focus();
   },250);
 }
@@ -591,6 +766,9 @@ function handleSend(e){
 inputField.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend(e);}
 });
+
+// Init — check for existing records
+updateRecordsBtn();
 </script>
 </body>
 </html>
