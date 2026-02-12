@@ -270,7 +270,16 @@ body {
 // ─── Helpers ────────────────────────────────────────────
 const FARSI_DIGITS={'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
 function toEn(s){return s.replace(/[۰-۹]/g,d=>FARSI_DIGITS[d])}
-function parseNums(t){return toEn(t.trim()).match(/\d+/g)?.map(Number)||[]}
+function parseNums(t){
+  const s=toEn(t.trim());
+  // Detect "question.answer" format: 1.3  2.1  3.1 or 1.3/2.1/3.1
+  const pairs=s.match(/\d+\s*[.\-:]\s*(\d+)/g);
+  if(pairs&&pairs.length>0){
+    return pairs.map(p=>{const m=p.match(/\d+\s*[.\-:]\s*(\d+)/);return Number(m[1])});
+  }
+  // Plain numbers separated by anything
+  return s.match(/\d+/g)?.map(Number)||[];
+}
 function isYes(t){t=t.trim();return['بله','آره','اره','بلی','yes','1','۱'].includes(t)}
 function isNo(t){t=t.trim();return['خیر','نه','نخیر','no','0','۰','2','۲'].includes(t)}
 
