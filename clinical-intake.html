@@ -270,7 +270,7 @@ body {
 // ─── Helpers ────────────────────────────────────────────
 const FARSI_DIGITS={'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
 function toEn(s){return s.replace(/[۰-۹]/g,d=>FARSI_DIGITS[d])}
-function parseNums(t){return toEn(t.trim()).split(/[\s,،]+/).map(Number).filter(n=>!isNaN(n))}
+function parseNums(t){return toEn(t.trim()).match(/\d+/g)?.map(Number)||[]}
 function isYes(t){t=t.trim();return['بله','آره','اره','بلی','yes','1','۱'].includes(t)}
 function isNo(t){t=t.trim();return['خیر','نه','نخیر','no','0','۰','2','۲'].includes(t)}
 
@@ -375,13 +375,13 @@ const L3=[
 ];
 
 // ─── State Machine ──────────────────────────────────────
-let state='', data={}, scrQ=[], scrStep=0, gQueue=[], gIdx=0, headGate=null, wfCount=0, prevAnswers=null;
+let state='', data={}, scrQ=[], scrStep=0, gQueue=[], gIdx=0, headGate=null, wfCount=0, prevAnswers=null, pendingAnswers=[];
 
 function initData(){
   data={name:'',first:'',phone:'',age:'',gender:'',
     screenOK:true,screenFails:[],complaints:[],compIdx:0,
     answers:{},meds:'',notes:''};
-  scrQ=[];scrStep=0;gQueue=[];gIdx=0;headGate=null;wfCount=0;
+  scrQ=[];scrStep=0;gQueue=[];gIdx=0;headGate=null;wfCount=0;pendingAnswers=[];
 }
 
 function process(text){
@@ -485,6 +485,7 @@ function buildQueue(){gQueue=[...L1,...L2,...L3];}
 function showGroup(){
   if(gIdx>=gQueue.length)return closeAssessment();
   const g=gQueue[gIdx];
+  pendingAnswers=[];
   if(g.gate){state='GROUP';return g.q;}
   if(g.cond&&headGate===false){gIdx++;return 'عالیه! 👍 بریم سراغ بخش بعدی.\n\n'+showGroup();}
   state='GROUP';return g.q;
@@ -493,20 +494,34 @@ function showGroup(){
 function handleGroup(t){
   const g=gQueue[gIdx];
   if(g.gate){
-    if(isYes(t)){headGate=true;gIdx++;return showGroup();}
-    if(isNo(t)){headGate=false;gIdx++;return showGroup();}
+    if(isYes(t)){headGate=true;gIdx++;pendingAnswers=[];return showGroup();}
+    if(isNo(t)){headGate=false;gIdx++;pendingAnswers=[];return showGroup();}
     return 'لطفاً با بله یا خیر جواب بدید.';
   }
-  if(g.med){data.meds=t;gIdx++;let r='';
+  if(g.med){data.meds=t;gIdx++;pendingAnswers=[];let r='';
     if(g.wf&&wfCount<7){r+=g.wf+'\n\n';wfCount++;}
     if(g.tr)r+=g.tr+'\n\n';
     return r+showGroup();
   }
-  const nums=parseNums(t),cnt=g.keys.length;
-  if(nums.length<cnt)return `لطفاً ${cnt} عدد وارد کنید (با فاصله از هم).`;
-  const mx=g.max||3;
-  for(let i=0;i<cnt;i++){if(nums[i]<0||nums[i]>mx)return `لطفاً اعداد بین ۰ تا ${mx} باشن.`}
-  for(let i=0;i<cnt;i++){data.answers[g.keys[i]]=nums[i];}
+  const nums=parseNums(t),cnt=g.keys.length,mx=g.max||3;
+  // If no numbers found, store as note and prompt again
+  if(!nums.length){
+    if(t.length>2)data.notes+=(data.notes?'\n':'')+t;
+    const rem=cnt-pendingAnswers.length;
+    return `لطفاً عدد وارد کنید (۰ تا ${mx}). ${rem} عدد باقی مونده.`;
+  }
+  // Validate incoming numbers
+  for(let i=0;i<nums.length;i++){if(nums[i]<0||nums[i]>mx)return `لطفاً اعداد بین ۰ تا ${mx} باشن.`}
+  // Add to pending answers
+  pendingAnswers=pendingAnswers.concat(nums);
+  // If we don't have enough yet, ask for the rest
+  if(pendingAnswers.length<cnt){
+    const got=pendingAnswers.length, rem=cnt-got;
+    return `✅ ${got} از ${cnt} — لطفاً ${rem} عدد دیگه وارد کنید.`;
+  }
+  // We have enough (or more) — store and advance
+  for(let i=0;i<cnt;i++){data.answers[g.keys[i]]=pendingAnswers[i];}
+  pendingAnswers=[];
   gIdx++;let r='';
   if(g.wf&&wfCount<7){r+=g.wf+'\n\n';wfCount++;}
   if(g.tr)r+=g.tr+'\n\n';
