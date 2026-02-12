@@ -494,16 +494,19 @@ function handleMore(t){
 
 function startAssessment(){
   state='AINTRO';
-  return `خوبه ${data.first} جان 🌿 الان یه سری سوالات داریم که کمک می‌کنه وضعیتتون رو دقیق‌تر بررسی کنیم.\n\nحدود ۱۵ دقیقه طول می‌کشه. راحت جواب بدید — درست و غلط نداره.\nبر اساس ۴-۶ هفته اخیرتون جواب بدید.\n\nبریم؟ 😊`;
+  return `خوبه ${data.first} جان 🌿 الان یه سری سوالات داریم که کمک می‌کنه وضعیتتون رو دقیق‌تر بررسی کنیم.\n\nحدود ۱۵ دقیقه طول می‌کشه. راحت جواب بدید — درست و غلط نداره.\nبر اساس ۴-۶ هفته اخیرتون جواب بدید.\n\n📝 نحوه پاسخ‌دهی:\n• بهترین روش: همه اعداد رو با فاصله بنویسید — مثلاً: 2 1 3\n• یکی‌یکی هم می‌شه — هر عدد رو جداگانه بفرستید\n• اعداد فارسی و انگلیسی هر دو قبوله\n\nبریم؟ 😊`;
 }
 function handleAIntro(){buildQueue();gIdx=0;return showGroup();}
 function buildQueue(){gQueue=[...L1,...L2,...L3];}
 
 function updateScaleLegend(g){
   if(!g||g.gate||g.med){scaleLegend.classList.add('hidden');return;}
-  const mx=g.max||3;
-  if(mx===3)scaleLegend.textContent='۰ = اصلاً  ·  ۱ = گاهی  ·  ۲ = اغلب  ·  ۳ = تقریباً همیشه';
-  else scaleLegend.textContent=`مقیاس: ۰ تا ${mx}  (توضیحات هر گزینه در سوال بالا)`;
+  const mx=g.max||3;const cnt=g.keys.length;
+  let txt='';
+  if(mx===3)txt='۰ = اصلاً  ·  ۱ = گاهی  ·  ۲ = اغلب  ·  ۳ = تقریباً همیشه';
+  else txt=`مقیاس: ۰ تا ${mx}  (توضیحات هر گزینه در سوال بالا)`;
+  if(cnt>1)txt+=`   ◂ ${cnt} عدد بنویسید (مثلاً: ${Array.from({length:cnt},()=>Math.min(2,mx)).join(' ')})`;
+  scaleLegend.textContent=txt;
   scaleLegend.classList.remove('hidden');
 }
 
