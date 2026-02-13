@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TMN Clinical Intake | فناوری‌های سلامت عصبی</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #12121a;
+  --bg-card: #1a1a25;
+  --bg-input: #1e1e2a;
+  --bg-hover: #252535;
+  --text-primary: #e8e8f0;
+  --text-secondary: #9898a8;
+  --text-muted: #6a6a7a;
+  --accent: #4ecdc4;
+  --accent-dim: #3ba89f;
+  --accent-glow: rgba(78,205,196,0.15);
+  --border: #2a2a3a;
+  --border-light: #353545;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  font-family:'Vazirmatn','Tahoma',sans-serif;
+  background:var(--bg-primary);
+  color:var(--text-primary);
+  direction:rtl;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+::selection { background:var(--accent); color:var(--bg-primary); }
+
+.app {
+  height:100vh; display:flex; flex-direction:column;
+  max-width:800px; margin:0 auto; background:var(--bg-secondary);
+}
+@media(min-width:800px){.app{border-left:1px solid var(--border);border-right:1px solid var(--border);}}
+
+/* Header */
+.header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.8rem 1.2rem; background:linear-gradient(180deg,#1e1e2e,var(--bg-card));
+  border-bottom:2px solid var(--accent-dim); flex-shrink:0;
+}
+.header-brand { display:flex; align-items:center; gap:0.8rem; }
+.header-logo {
+  width:38px; height:38px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-dim));
+  border-radius:var(--radius-sm); display:flex; align-items:center;
+  justify-content:center; font-size:1.2rem; flex-shrink:0;
+}
+.header-text h1 {
+  font-size:0.95rem; font-weight:600; color:var(--text-primary);
+  direction:ltr; text-align:right; line-height:1.3;
+}
+.header-sub { font-size:0.75rem; color:var(--text-muted); line-height:1.3; }
+.reset-btn {
+  background:none; border:1px solid var(--border); color:var(--text-secondary);
+  width:36px; height:36px; border-radius:var(--radius-sm); cursor:pointer;
+  display:none; align-items:center; justify-content:center; transition:all 0.2s;
+}
+.reset-btn:hover { background:var(--bg-hover); color:var(--text-primary); }
+.reset-btn.show { display:flex; }
+
+/* Chat area */
+.chat-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* Welcome */
+.welcome {
+  flex:1; display:flex; align-items:center; justify-content:center; padding:2rem;
+}
+.welcome-inner { text-align:center; max-width:400px; }
+.welcome-icon { font-size:4rem; margin-bottom:1.5rem; animation:pulse 3s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 transparent)} 50%{transform:scale(1.08);filter:drop-shadow(0 0 20px var(--accent-glow))} }
+.welcome-inner h2 { font-size:1.4rem; font-weight:600; margin-bottom:1rem; }
+.welcome-inner p { font-size:0.95rem; color:var(--text-secondary); line-height:1.8; margin-bottom:2rem; }
+.start-btn {
+  background:var(--accent); color:var(--bg-primary); border:none;
+  padding:0.8rem 2.5rem; font-size:1.05rem; font-weight:600;
+  font-family:inherit; border-radius:var(--radius); cursor:pointer;
+  transition:all 0.2s; box-shadow:0 0 20px var(--accent-glow);
+}
+.start-btn:hover { background:var(--accent-dim); transform:translateY(-2px); box-shadow:0 4px 24px var(--accent-glow); }
+.start-btn:active { transform:translateY(0); }
+
+/* Scale legend */
+.scale-legend {
+  padding:0.5rem 1rem; background:linear-gradient(90deg,var(--bg-card),#1a2a28,var(--bg-card));
+  border-bottom:1px solid var(--border); font-size:0.82rem; color:var(--accent);
+  text-align:center; flex-shrink:0; letter-spacing:0.02em; direction:rtl;
+}
+
+/* Progress bar */
+.progress-wrap { height:3px; background:var(--bg-primary); flex-shrink:0; }
+.progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent-dim),var(--accent)); transition:width 0.5s ease; border-radius:0 0 2px 2px; }
+
+/* Messages */
+.messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.6rem; scroll-behavior:smooth; }
+.msg { display:flex; animation:msgIn 0.3s ease; }
+.msg.assistant { justify-content:flex-start; }
+.msg.user { justify-content:flex-end; }
+.bubble {
+  max-width:85%; padding:0.7rem 1rem; border-radius:var(--radius);
+  font-size:0.92rem; line-height:1.8; word-wrap:break-word; white-space:pre-wrap;
+}
+.bubble.assistant {
+  background:var(--bg-card); color:var(--text-primary);
+  border:1px solid var(--border); border-top-right-radius:4px;
+  border-right:3px solid var(--accent-dim);
+}
+.bubble.user {
+  background:var(--accent); color:var(--bg-primary);
+  border-top-left-radius:4px; font-weight:500;
+  box-shadow:0 2px 8px rgba(78,205,196,0.2);
+}
+.bubble.report {
+  max-width:95%; background:var(--bg-primary);
+  border:1px solid var(--accent-dim); font-family:'Vazirmatn',monospace;
+  font-size:0.82rem; line-height:1.9; padding:1rem 1.2rem;
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.bubble-text { direction:rtl; unicode-bidi:plaintext; }
+@keyframes msgIn { from{opacity:0;transform:translateY(8px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+/* Typing indicator */
+.typing { display:flex; gap:4px; padding:0.3rem 0.2rem; direction:ltr; }
+.typing span {
+  width:7px; height:7px; background:var(--text-muted); border-radius:50%;
+  animation:type 1.4s infinite ease-in-out;
+}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes type { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
+
+/* Input */
+.input-bar {
+  padding:0.8rem 1rem; background:var(--bg-secondary);
+  border-top:1px solid var(--border); flex-shrink:0;
+}
+.input-wrap {
+  display:flex; align-items:flex-end; gap:0.5rem;
+  background:var(--bg-input); border:1px solid var(--border);
+  border-radius:var(--radius); padding:0.4rem; transition:border-color 0.2s;
+}
+.input-wrap:focus-within { border-color:var(--accent-dim); box-shadow:0 0 0 2px var(--accent-glow); }
+.input-wrap textarea {
+  flex:1; background:none; border:none; color:var(--text-primary);
+  font-family:inherit; font-size:0.95rem; padding:0.5rem 0.7rem;
+  resize:none; outline:none; direction:rtl; line-height:1.6;
+  max-height:120px; min-height:24px;
+}
+.input-wrap textarea::placeholder { color:var(--text-muted); }
+.send-btn {
+  width:40px; height:40px; background:var(--accent); color:var(--bg-primary);
+  border:none; border-radius:var(--radius-sm); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; flex-shrink:0; transform:scaleX(-1);
+}
+.send-btn:hover { background:var(--accent-dim); }
+.send-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.send-btn svg { width:20px; height:20px; }
+
+/* Action buttons */
+.actions-bar {
+  display:flex; flex-wrap:wrap; gap:0.5rem; padding:0.8rem 1rem;
+  background:var(--bg-secondary); border-top:1px solid var(--border);
+  justify-content:center; flex-shrink:0;
+}
+.action-btn {
+  background:var(--bg-card); color:var(--text-primary); border:1px solid var(--border);
+  padding:0.5rem 1rem; font-size:0.85rem; font-family:inherit;
+  border-radius:var(--radius-sm); cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; gap:0.4rem;
+}
+.action-btn:hover { background:var(--bg-hover); border-color:var(--accent-dim); }
+.action-btn.primary { background:var(--accent); color:var(--bg-primary); border-color:var(--accent); font-weight:600; }
+.action-btn.primary:hover { background:var(--accent-dim); }
+
+/* Download button on report bubbles */
+.report-actions { display:flex; gap:0.4rem; margin-top:0.6rem; direction:ltr; }
+.dl-btn {
+  background:var(--accent); color:var(--bg-primary); border:none;
+  padding:0.3rem 0.8rem; font-size:0.75rem; font-family:inherit;
+  border-radius:4px; cursor:pointer; transition:all 0.2s;
+}
+.dl-btn:hover { background:var(--accent-dim); }
+
+/* Records panel */
+.records-panel {
+  position:absolute; inset:0; background:var(--bg-secondary); z-index:10;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.records-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 1.2rem; border-bottom:1px solid var(--border);
+}
+.records-header h2 { font-size:1.1rem; font-weight:600; }
+.records-list { flex:1; overflow-y:auto; padding:0.8rem; }
+.record-card {
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:0.8rem 1rem; margin-bottom:0.5rem;
+  cursor:pointer; transition:all 0.2s;
+}
+.record-card:hover { border-color:var(--accent-dim); }
+.record-name { font-weight:600; font-size:0.95rem; }
+.record-meta { font-size:0.8rem; color:var(--text-muted); margin-top:0.2rem; }
+.record-btns { display:flex; gap:0.4rem; margin-top:0.5rem; }
+.no-records { text-align:center; color:var(--text-muted); padding:3rem 1rem; font-size:0.95rem; }
+
+/* Welcome buttons row */
+.welcome-btns { display:flex; gap:0.8rem; justify-content:center; flex-wrap:wrap; }
+
+.hidden { display:none !important; }
+
+@media(max-width:480px){
+  .header-text h1{font-size:0.85rem}
+  .header-sub{font-size:0.7rem}
+  .bubble{max-width:92%;font-size:0.88rem;padding:0.6rem 0.9rem}
+  .bubble.report{max-width:98%;font-size:0.78rem;padding:0.8rem}
+  .input-bar{padding:0.6rem 0.8rem;padding-bottom:calc(0.6rem + env(safe-area-inset-bottom,0))}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">⚡</div>
+      <div class="header-text">
+        <h1>Neural Wellness Technologies</h1>
+        <span class="header-sub">فناوری‌های سلامت عصبی</span>
+      </div>
+    </div>
+    <button class="reset-btn" id="resetBtn" title="شروع مجدد" onclick="resetChat()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+  </header>
+  <div class="chat-area">
+    <div class="welcome" id="welcome">
+      <div class="welcome-inner">
+        <div class="welcome-icon">🧠</div>
+        <h2>سیستم ارزیابی بالینی TMN</h2>
+        <p>به سیستم ارزیابی بالینی فناوری‌های سلامت عصبی خوش آمدید.<br>این ارزیابی حدود ۲۰ دقیقه زمان می‌برد.</p>
+        <div class="welcome-btns">
+          <button class="start-btn" onclick="startChat()">شروع ارزیابی</button>
+          <button class="action-btn" onclick="showRecords()" id="recordsBtn" style="display:none">سوابق مراجعین</button>
+        </div>
+      </div>
+    </div>
+    <div class="scale-legend hidden" id="scaleLegend">۰ = اصلاً  ·  ۱ = گاهی  ·  ۲ = اغلب  ·  ۳ = تقریباً همیشه</div>
+    <div class="progress-wrap hidden" id="progressWrap"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="messages hidden" id="messages"></div>
+    <div class="actions-bar hidden" id="actionsBar">
+      <button class="action-btn primary" onclick="triggerClinical()">📊 گزارش بالینی (دکتر فتاحی)</button>
+      <button class="action-btn primary" onclick="triggerAdmin()">📋 گزارش اداری (آتوسا)</button>
+      <button class="action-btn" onclick="triggerReassess()">🔄 بازارزیابی</button>
+    </div>
+    <div class="records-panel hidden" id="recordsPanel">
+      <div class="records-header">
+        <h2>سوابق مراجعین</h2>
+        <button class="action-btn" onclick="hideRecords()">بستن ✕</button>
+      </div>
+      <div class="records-list" id="recordsList"></div>
+    </div>
+    <div class="input-bar hidden" id="inputBar">
+      <form class="input-wrap" onsubmit="handleSend(event)">
+        <textarea id="inputField" placeholder="پاسخ خود را بنویسید..." rows="1" dir="rtl"></textarea>
+        <button type="submit" class="send-btn" id="sendBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Helpers ────────────────────────────────────────────
+const FARSI_DIGITS={'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+function toEn(s){return s.replace(/[۰-۹]/g,d=>FARSI_DIGITS[d])}
+function parseNums(t,pairMode){
+  const s=toEn(t.trim());
+  // Detect "question.answer" format ONLY in group state
+  if(pairMode){
+    const pairs=s.match(/\d+\s*[.\-:]\s*(\d+)/g);
+    if(pairs&&pairs.length>0){
+      return pairs.map(p=>{const m=p.match(/\d+\s*[.\-:]\s*(\d+)/);return Number(m[1])});
+    }
+  }
+  return s.match(/\d+/g)?.map(Number)||[];
+}
+function isYes(t){t=t.trim();return['بله','آره','اره','بلی','yes','1','۱'].includes(t)}
+function isNo(t){t=t.trim();return['خیر','نه','نخیر','no','0','۰','2','۲'].includes(t)}
+
+const MALE=new Set(['محمد','علی','حسین','رضا','امیر','احمد','مهدی','حسن','امین','سعید','فرهاد','بهرام','کامران','پیمان','شاهین','آرش','بابک','داریوش','کوروش','سپهر','پارسا','آرمان','مهران','بهنام','نوید','پویا','مجید','جواد','کیان','آرین','ایمان','رامین','سهیل','مسعود','حمید','سامان','پدرام','یاسین','عرفان','ابوالفضل','محمدرضا','امیرحسین','علیرضا','محمدحسین','امیرعلی','حسام','شایان','آرمین','دانیال','میلاد','فرزاد','وحید','مرتضی','کاظم','اکبر','هومن','بهزاد']);
+const FEMALE=new Set(['فاطمه','زهرا','مریم','سارا','نازنین','مهسا','شیما','الهام','نرگس','مینا','لیلا','پریسا','نگار','آتوسا','شهلا','فرناز','نیلوفر','ستاره','بهاره','سمیرا','رویا','آزاده','غزاله','پگاه','هانیه','زینب','نسیم','ساناز','گلناز','مهناز','پروانه','شبنم','ترانه','مژگان','فرشته','ثمین','یاسمن','هلیا','مائده','کیمیا','رها','دنیا','مهرناز','لاله','پریناز','آیدا','بیتا','سحر','شیدا']);
+const AMBIG=new Set(['آریا','سام','نیکا','نوا','درسا','دریا','سایه','بهار','صبا']);
+
+function detectGender(n){if(MALE.has(n))return'male';if(FEMALE.has(n))return'female';if(AMBIG.has(n))return'ambiguous';return'unknown'}
+function persianDate(){try{return new Intl.DateTimeFormat('fa-IR',{year:'numeric',month:'long',day:'numeric'}).format(new Date())}catch{return new Date().toLocaleDateString('fa-IR')}}
+
+const COMPLAINT_LABELS={1:'سردرد',2:'مشکل خواب',3:'اضطراب',4:'افسردگی',5:'مشکل تمرکز',6:'خستگی مزمن',7:'استرس',8:'سایر'};
+const SEVERITY={
+  1:{t:'سردردتون بیشتر شبیه کدومه؟',o:['۱. گاهی یه سردرد خفیف — با یه قرص حل می‌شه','۲. هفته‌ای چند بار سردرد دارم','۳. سردردم با استرس بدتر می‌شه','۴. سردردای شدید که کار و زندگیمو مختل می‌کنه','۵. میگرنی یا با حالت تهوع و حساسیت به نور']},
+  2:{t:'مشکل خوابتون بیشتر شبیه کدومه؟',o:['۱. گاهی یکم دیر می‌خوابم — ولی کلاً خوبه','۲. اکثر شب‌ها طول می‌کشه تا خوابم ببره','۳. بیدار می‌شم وسط شب و خوابم نمی‌بره','۴. صبح خسته بیدار می‌شم انگار نخوابیدم','۵. خواب برام شده یه جنگ هر شبه']},
+  3:{t:'اضطرابتون بیشتر شبیه کدوم حالته؟',o:['۱. یه کم نگرانی — گاهی فکرم مشغوله ولی مشکل خاصی نیست','۲. نگرانی منظم — هر روز یه چیزی ذهنمو درگیر می‌کنه','۳. بدن هم درگیره — دلشوره، تپش قلب، عرق کف دست','۴. روی زندگیم اثر گذاشته — بعضی کارا رو دیگه نمی‌تونم انجام بدم','۵. کنترل ندارم — حمله پنیک، نمی‌تونم از خونه برم بیرون']},
+  4:{t:'حالتون بیشتر شبیه کدومه؟',o:['۱. گاهی بی‌حوصله می‌شم — زود برمی‌گردم','۲. انگیزه‌ام کم شده — کارا رو با زور انجام می‌دم','۳. از چیزایی که قبلاً دوست داشتم لذت نمی‌برم','۴. احساس سنگینی مداوم — مثل اینکه یه وزنه روم باشه','۵. بعضی روزا از تخت بلند شدن هم سخته']},
+  5:{t:'مشکل تمرکزتون بیشتر شبیه کدومه؟',o:['۱. گاهی حواسم پرت می‌شه — طبیعیه','۲. برای تمرکز باید خیلی تلاش کنم','۳. وسط کار ذهنم می‌ره جای دیگه بدون اینکه بخوام','۴. نمی‌تونم یه کار رو تا آخر ادامه بدم','۵. ذهنم مثل تلویزیونه که کسی مدام کانالشو عوض می‌کنه']},
+  6:{t:'خستگیتون بیشتر شبیه کدومه؟',o:['۱. آخر روز خسته می‌شم — طبیعیه','۲. از صبح خسته‌ام بدون دلیل مشخص','۳. حتی بعد از استراحت انرژیم برنمی‌گرده','۴. خستگی کارامو مختل کرده','۵. انرژیم مثل باتری خالیه که شارژ نمی‌شه']},
+  7:{t:'استرستون بیشتر شبیه کدومه؟',o:['۱. استرس عادی زندگی — قابل کنترله','۲. بیشتر از حد معمول استرس دارم','۳. بدنم هم استرس رو نشون می‌ده — تنش، سردرد، دل‌درد','۴. استرس خوابم، اشتهام، یا روابطمو تحت تأثیر گذاشته','۵. احساس می‌کنم همیشه تو حالت جنگ یا فرارم']},
+  8:{t:'لطفاً مشکلتون رو کوتاه توضیح بدید:',o:[],free:true}
+};
+
+// ─── Assessment Groups ──────────────────────────────────
+const L1=[
+  {id:'L1G1',keys:['L1Q1','L1Q2','L1Q3'],max:3,
+   q:'بیایید با وضعیت بدنتون شروع کنیم.\n\nبرای هر کدوم از ۰ تا ۳ بگید:\n۰ = اصلاً  ۱ = گاهی  ۲ = اغلب  ۳ = تقریباً همیشه\n\n۱. تنش یا بی‌قراری پایه‌ای در بدن\n۲. گرفتگی مزمن در گردن، فک، شانه‌ها یا سینه\n۳. احساس اینکه بدنتون دائماً در حالت آماده‌باشه'},
+  {id:'L1G2',keys:['L1Q4','L1Q5','L1Q6'],max:3,
+   q:'چند سوال درباره انرژی و تنفس:\n\n۴. سختی در نفس عمیق و راحت\n۵. خستگی زودتر از حد انتظار\n۶. افت‌های ناگهانی انرژی در طول روز',
+   wf:'🌍 جالبه بدونید ۸۰٪ مردم دنیا نفس کم‌عمق می‌کشن بدون اینکه خودشون بدونن. این مستقیم روی انرژی اثر می‌ذاره.'},
+  {id:'L1G3a',keys:['L1Q7'],max:5,
+   q:'خواب یکی از مهم‌ترین شاخص‌هاست 🌙\n\n۷. چقدر طول می‌کشه تا خوابتون ببره؟\n۰ = کمتر از ۱۵ دقیقه\n۱ = ۱۵-۳۰ دقیقه\n۲ = ۳۰-۴۵ دقیقه\n۳ = ۴۵ دقیقه تا ۱ ساعت\n۴ = بیش از ۱ ساعت\n۵ = فقط با دارو'},
+  {id:'L1G3b',keys:['L1Q8'],max:4,
+   q:'۸. خوابتون چقدر پیوسته‌ست؟\n۰ = عمیق و بدون بیداری\n۱ = یکی دو بار بیدار می‌شم ولی زود می‌خوابم\n۲ = چند بار بیدار می‌شم\n۳ = بیداری‌های مکرر\n۴ = خواب بسیار ناپایدار'},
+  {id:'L1G3c',keys:['L1Q9'],max:4,
+   q:'۹. صبح وقتی بیدار می‌شید چه حسی دارید؟\n۰ = کاملاً سرحال\n۱ = نسبتاً خوب\n۲ = نه خوب نه بد\n۳ = خسته\n۴ = کاملاً خسته — انگار نخوابیدم',
+   wf:'🌍 ۶۲٪ مردم دنیا از کیفیت خوابشون راضی نیستن. خواب اولین چیزیه که مغز ازش ضربه می‌خوره و اولین چیزیه که با درمان بهتر می‌شه.'},
+  {id:'L1G4',keys:['L1Q10'],max:5,
+   q:'۱۰. حساسیت به صدا، نور یا محیط‌های شلوغ — از ۰ تا ۵:\n۰ = عادی\n۱ = یکم حساسم\n۲ = محیط شلوغ اذیتم می‌کنه\n۳ = باید از بعضی جاها فرار کنم\n۴ = خیلی حساسم — سردرد یا عصبانیت\n۵ = تحمل ندارم — مجبورم محیطمو کنترل کنم'},
+  {id:'L1G5',keys:['L1Q11'],max:5,
+   q:'۱۱. وقتی استرس دارید، بدنتون چقدر طول می‌کشه آروم بشه؟\n۰ = چند دقیقه\n۱ = کمتر از ۱۵ دقیقه\n۲ = ۱۵-۳۰ دقیقه\n۳ = ۳۰ دقیقه تا ۱ ساعت\n۴ = چند ساعت\n۵ = تمام روز یا بیشتر\n\n💡 منظورم بدنتونه نه ذهنتون.',
+   wf:'🌍 فقط ۱۵٪ مردم دنیا می‌تونن بعد از استرس ظرف ۵ دقیقه آروم بشن. اکثر ما بدنمون کندتر از ذهنمون ریکاوری می‌کنه.'},
+  {id:'L1G6',keys:['L1Q12'],max:3,
+   q:'۱۲. حس کلی امنیت و آرامش درونی:\n۰ = آرام و ایمن\n۱ = گاهی ناآرام\n۲ = اغلب ناآرام\n۳ = تقریباً همیشه ناایمن'},
+  {id:'L1G7gate',keys:[],gate:true,
+   q:'آیا سردرد تجربه می‌کنید؟ بله / خیر'},
+  {id:'L1G7',keys:['L1Q13','L1Q14','L1Q15','L1Q16'],max:5,cond:true,
+   q:'۱۳. تکرار سردرد (۰-۳)\n۱۴. ارتباط سردرد با استرس (۰-۴)\n۱۵. قابل پیش‌بینی بودن سردرد (۰-۴)\n۱۶. علائم همراه — تهوع، حساسیت به نور (۰-۵)'},
+  {id:'L1G8',keys:['L1Q17'],max:4,
+   q:'۱۷. انرژی و حالتون در طول روز چقدر تغییر می‌کنه؟\n۰ = پایدار\n۱ = کمی نوسان\n۲ = نوسان قابل توجه\n۳ = خیلی بالا و پایین\n۴ = کاملاً غیرقابل پیش‌بینی'},
+  {id:'L1G9',keys:['L1Q18'],max:4,
+   q:'۱۸. توانایی تحمل فشار ذهنی:\n۰ = خوب تحمل می‌کنم\n۱ = کمی سخته\n۲ = زود اشباع می‌شم\n۳ = خیلی کم تحمل دارم\n۴ = کوچک‌ترین فشار ذهنی خُردم می‌کنه'},
+  {id:'L1G10',keys:['L1Q19'],max:4,
+   q:'۱۹. وقتی استراحت می‌کنید، چه اتفاقی می‌افته؟\n۰ = به‌وضوح بهتر می‌شم\n۱ = کمی بهتر\n۲ = فرق خاصی نمی‌کنه\n۳ = فرقی نمی‌کنه\n۴ = بدتر می‌شم — ذهنم بیشتر درگیر می‌شه'},
+  {id:'L1G11',keys:['L1Q20','L1Q21'],max:5,
+   q:'۲۰. صبح‌ها چطورید؟\n۰ = سرحال\n۱ = کمی سنگین\n۲ = سنگین — طول می‌کشه تا راه بیفتم\n۳ = خیلی سخت\n۴ = صبح بدترین بخش روزمه\n۵ = بعضی روزا نمی‌تونم از تخت بلند بشم\n\n۲۱. عصر و شب‌ها چطورید؟\n۰ = خوبم\n۱ = کمی خسته\n۲ = افت خلق یا انرژی\n۳ = خیلی خسته یا بی‌حوصله\n۴ = شب‌ها بدترین حالمه'},
+  {id:'L1G12',keys:['L1Q22','L1Q23','L1Q24'],max:5,
+   q:'چند سوال کوتاه درباره اشتها:\n\n۲۲. خوردن بدون گرسنگی واقعی (۰-۴)\n۲۳. ولع شدید به شیرینی، شور یا کربوهیدرات (۰-۵)\n۲۴. تغییر وزن بدون تغییر عمدی رژیم (۰-۴)'},
+  {id:'L1G13',keys:[],med:true,
+   q:'و در آخر این بخش — آیا دارویی مصرف می‌کنید؟\n\nبرای هر کدوم بگید: ۰ = خیر  ۱ = قبلاً  ۲ = فعلاً\n\n- آرام‌بخش / بنزودیازپین\n- ضدافسردگی\n- خواب‌آور\n- محرک\n- بتابلاکر\n- سایر (اسم بگید)',
+   wf:'🌍 ۲۵٪ جمعیت بزرگسال دنیا حداقل یک داروی روان‌پزشکی مصرف می‌کنن. شما تنها نیستید.',
+   tr:'عالی بود! بخش اول تموم شد 🌟\nیه نفس عمیق بکشید...\nبریم سراغ بخش دوم — درباره نحوه کار ذهنتون 🧠'},
+];
+
+const L2=[
+  {id:'L2G1',keys:['L2Q1','L2Q2','L2Q3'],max:3,
+   q:'بیایید ببینیم ذهنتون چطور ترمز می‌زنه 🛑\n\nبرای هر کدوم از ۰ تا ۳ بگید:\n۰ = اصلاً  ۱ = گاهی  ۲ = اغلب  ۳ = تقریباً همیشه\n\n۱. وقتی یه فکر یا رفتار شروع می‌شه، سخته متوقفش کنم\n۲. قبل از فکر کردن واکنش نشون می‌دم\n۳. خاموش کردن پاسخ‌ها برام زمان‌بره'},
+  {id:'L2G2',keys:['L2Q4','L2Q5','L2Q6'],max:3,
+   q:'درباره جابجایی بین حالات:\n\n۴. سختی در تغییر از کار به استراحت یا برعکس\n۵. گیرکردن بین دو حالت — می‌خوام ولی نمی‌تونم\n۶. بعد از قطع کار، ذهنم هنوز همون‌جاست',
+   wf:'🌍 ۷۰٪ مردم می‌گن بعد از کار نمی‌تونن ذهنشونو خاموش کنن. این ربطی به اراده نداره — مربوط به نحوه سوئیچ مغزه.'},
+  {id:'L2G3',keys:['L2Q7','L2Q8','L2Q9'],max:3,
+   q:'این سوالات درباره اینه که ذهنتون چی رو مهم می‌بینه:\n\n۷. چیزهای کوچک بیش از حد مهم و فوری به نظر می‌رسن\n۸. تمرکزم مدام توسط محرک‌های بیرونی یا داخلی ربوده می‌شه\n۹. حس فوریت یا هشدار درونی بدون دلیل واضح'},
+  {id:'L2G4',keys:['L2Q10','L2Q11','L2Q12'],max:3,
+   q:'درباره فکرهای تکراری:\n\n۱۰. فکرها تکراری می‌شن و سخت قطع می‌شن\n۱۱. ذهنم خودبه‌خود به گذشته، آینده یا خودم برمی‌گرده\n۱۲. وقتایی که باید خاموش باشم، ذهنم فعاله',
+   wf:'🌍 تحقیقات نشون می‌ده ما روزی حدود ۶۰۰۰ فکر داریم. در افرادی که نشخوار ذهنی دارن، ۸۰٪ این فکرها تکراری هستن.'},
+  {id:'L2G5',keys:['L2Q13','L2Q14','L2Q15'],max:3,
+   q:'درباره شروع و ادامه کارها:\n\n۱۳. شروع کردن سخته حتی اگه بدونم چی باید بکنم\n۱۴. ادامه دادن تا پایان کار سخته\n۱۵. مدیریت اولویت‌ها و برنامه‌ریزی برام دشواره'},
+  {id:'L2G6',keys:['L2Q16','L2Q17','L2Q18'],max:3,
+   q:'درباره انعطاف ذهنی:\n\n۱۶. زیر فشار، ذهنم خشک می‌شه و گزینه‌ها کم می‌شن\n۱۷. تغییر دیدگاه یا پذیرفتن مسیر جایگزین سخته\n۱۸. یه الگوی فکری رو تکرار می‌کنم حتی اگه مفید نیست'},
+  {id:'L2G7',keys:['L2Q19','L2Q20'],max:3,
+   q:'دو سوال آخر این بخش:\n\n۱۹. مشکلات ذهنی عملکرد شغلی یا تحصیلیم رو مختل کرده\n۲۰. تصمیم‌گیری یا روابطم به‌خاطر واکنش‌پذیری ذهنی آسیب دیده',
+   wf:'🌍 ۴۵٪ کارکنان در دنیا می‌گن مشکلات ذهنی روی کارشون اثر منفی گذاشته. مغز وقتی درست تنظیم نباشه، هر کاری سخت‌تر می‌شه.',
+   tr:'عالی! بخش آخر رسیدیم 💪 این بخش درباره پایداری تغییرات و سازگاریه. تقریباً تمومه!'},
+];
+
+const L3=[
+  {id:'L3G1',keys:['L3Q1','L3Q2','L3Q3'],rev:['L3Q1'],max:3,
+   q:'وقتی چیزی بهتر می‌شه، چه اتفاقی می‌افته؟\n\n۱. وقتی یه مهارت یا عادتم بهتر می‌شه، به بخش‌های دیگه زندگیم هم سرایت می‌کنه\n   ۰ = اصلاً  ۱ = کمی  ۲ = تا حدی  ۳ = کاملاً\n۲. پیشرفت‌هام فقط تو شرایط خاص کار می‌کنن (۰-۳)\n۳. پیشرفت دارم ولی پایدار نیست و به شرایط بستگی داره (۰-۳)'},
+  {id:'L3G2',keys:['L3Q4','L3Q5','L3Q6'],max:3,
+   q:'درباره ماندگاری تغییرات:\n\n۴. بعد از پیشرفت، بازگشت‌های خفیف مکرر تجربه می‌کنم (۰-۳)\n۵. با کوچک‌ترین فشار، سریع به الگوی قبلی برمی‌گردم (۰-۳)\n۶. تغییرات خوب وجود دارن ولی شکننده هستن (۰-۳)',
+   wf:'🌍 تحقیقات نشون می‌ده ۶۵٪ افرادی که تغییرات مثبت تجربه می‌کنن، در ۳ ماه اول برگشت جزئی دارن. این طبیعیه — مغز به تکرار نیاز داره.'},
+  {id:'L3G3',keys:['L3Q7','L3Q8','L3Q9'],max:3,
+   q:'درباره جابجایی بین فعالیت‌ها:\n\n۷. انتقال بین شروع، ادامه و پایان کارها مشکل‌سازه (۰-۳)\n۸. بعد از وقفه (تعطیلات، سفر، بیماری)، برگشت به روتین سخته (۰-۳)\n۹. ریتم زندگی یا کارم به‌هم می‌خوره و بازسازیش سخته (۰-۳)'},
+  {id:'L3G4',keys:['L3Q10','L3Q11','L3Q12'],max:3,
+   q:'عملکردتون چقدر به حالتون بستگی داره؟\n\n۱۰. عملکردم شدیداً به حالت جسمی و روحی اون لحظه وابسته‌ست (۰-۳)\n۱۱. اگه شرایط ایده‌آل نباشه، کیفیت عملکردم به‌شدت افت می‌کنه (۰-۳)\n۱۲. حتی تو شرایط متوسط، باید خیلی فشار بیارم تا درست کار کنم (۰-۳)'},
+  {id:'L3G5',keys:['L3Q13','L3Q14','L3Q15'],max:3,
+   q:'درباره هماهنگی بین فکر، احساس و بدن:\n\n۱۳. حس تعارض مداوم بین فکر، احساس و بدن دارم (۰-۳)\n۱۴. تصمیم می‌گیرم ولی بدن یا احساسم همکاری نمی‌کنه (۰-۳)\n۱۵. حس ناهماهنگی درونی حتی وقتی مشکل بزرگی نیست (۰-۳)',
+   wf:'🌍 ۵۵٪ مردم دنیا می‌گن بین چیزی که می‌خوان و چیزی که انجام می‌دن فاصله هست. این یه مسئله مغزیه، نه کمبود اراده.'},
+  {id:'L3G6',keys:['L3Q16','L3Q17','L3Q18'],rev:['L3Q16','L3Q18'],max:3,
+   q:'درباره سازگاری:\n\n۱۶. وقتی برنامه‌ها عوض می‌شن، می‌تونم خودمو وفق بدم\n   ۰ = نمی‌تونم  ۱ = سخته  ۲ = تا حدی  ۳ = راحت وفق می‌دم\n۱۷. تغییرات کوچک باعث به‌هم‌ریختن سیستمم می‌شن (۰-۳)\n۱۸. بعد از یه روز سخت، می‌تونم فردا رو از صفر بسازم\n   ۰ = نمی‌تونم  ۱ = سخته  ۲ = تا حدی  ۳ = بله'},
+  {id:'L3G7',keys:['L3Q19','L3Q20'],rev:['L3Q19','L3Q20'],max:3,
+   q:'و در نهایت:\n\n۱۹. زندگی روزمره‌م حس یکپارچگی داره — نه تکه‌تکه\n   ۰ = تکه‌تکه  ۱ = بیشتر تکه‌تکه  ۲ = تا حدی یکپارچه  ۳ = کاملاً یکپارچه\n۲۰. می‌تونم تعادل بین چند حوزه زندگی رو همزمان حفظ کنم\n   ۰ = نمی‌تونم  ۱ = سخته  ۲ = تا حدی  ۳ = بله'},
+];
+
+// ─── State Machine ──────────────────────────────────────
+let state='', data={}, scrQ=[], scrStep=0, gQueue=[], gIdx=0, headGate=null, wfCount=0, prevAnswers=null, pendingAnswers=[];
+
+function initData(){
+  data={name:'',first:'',phone:'',age:'',gender:'',
+    screenOK:true,screenFails:[],complaints:[],compIdx:0,
+    answers:{},meds:'',notes:''};
+  scrQ=[];scrStep=0;gQueue=[];gIdx=0;headGate=null;wfCount=0;pendingAnswers=[];
+}
+
+function process(text){
+  const t=text.trim();
+  // Report codes — normalize for flexible matching
+  const tNorm=t.replace(/[\s\u00A0\u200C]+/g,' ').replace(/[‐‑–—―-]/g,'-');
+  const tLower=tNorm.toLowerCase();
+  if(tLower==='ali - 189419'||tLower==='ali-189419'||tLower==='ali -189419'||tNorm==='Ali - 189419') return clinicalReport();
+  if(tNorm==='Atousa:12271227'||tLower==='atousa:12271227'||tLower==='atousa: 12271227'||tLower==='atousa :12271227') return adminReport();
+  if((t==='بازارزیابی'||t==='باز ارزیابی'||tLower==='reassess'||tLower==='reassessment')&&(state==='IDLE'||data.name)) return startReassess();
+
+  // Safety
+  if(['خودکشی','می‌خوام بمیرم','نمی‌خوام زنده باشم'].some(w=>t.includes(w)))
+    return '[SYSTEM: ⛔ SAFETY FLAG — Client expressed distress. Atousa must immediately inform Dr. Fattahi.]\n\nممنون که بهم اعتماد کردید و این رو گفتید. الان آتوسا خانم کمکتون می‌کنه. 💚';
+
+  switch(state){
+    case 'NAME': return handleName(t);
+    case 'GENDER': return handleGender(t);
+    case 'PHONE': return handlePhone(t);
+    case 'AGE': return handleAge(t);
+    case 'SCR': return handleScreening(t);
+    case 'COMP': return handleComplaints(t);
+    case 'SEV': return handleSeverity(t);
+    case 'MORE': return handleMore(t);
+    case 'AINTRO': return handleAIntro();
+    case 'GROUP': return handleGroup(t);
+    case 'IDLE': return 'ارزیابی تمام شده. اگه سوالی دارید بپرسید 😊';
+    default: return 'متوجه نشدم. لطفاً دوباره تلاش کنید.';
+  }
+}
+
+function handleName(t){
+  data.name=t; data.first=t.split(/\s+/)[0];
+  const g=detectGender(data.first);
+  if(g==='ambiguous'||g==='unknown'){state='GENDER';return `ممنون ${data.first} جان.\nلطفاً جنسیتتون رو بگید:\n۱. مرد\n۲. زن`}
+  data.gender=g; state='PHONE';
+  return `ممنون ${data.first} جان.\nلطفاً شماره تماستون رو بگید.`;
+}
+function handleGender(t){
+  const n=parseNums(t);
+  if(n[0]===1||t.includes('مرد'))data.gender='male';
+  else if(n[0]===2||t.includes('زن'))data.gender='female';
+  else return 'لطفاً بگید:\n۱. مرد\n۲. زن';
+  state='PHONE'; return 'ممنون.\nلطفاً شماره تماستون رو بگید.';
+}
+function handlePhone(t){data.phone=toEn(t.replace(/\s+/g,''));state='AGE';return 'سنتون چنده؟'}
+function handleAge(t){
+  const n=parseNums(t);if(!n.length)return 'لطفاً سنتون رو به عدد بگید.';
+  if(n[0]<2||n[0]>120)return 'لطفاً سن معتبر وارد کنید.';
+  data.age=n[0]; return startScreening();
+}
+
+function startScreening(){
+  scrQ=['آیا پیس‌میکر یا دستگاه الکتریکی کاشته‌شده در بدن دارید؟','آیا سابقه صرع یا تشنج دارید؟'];
+  if(data.gender==='female'||data.gender==='ambiguous')scrQ.push('آیا باردار هستید؟');
+  scrQ.push('آیا ایمپلنت فلزی در سر دارید؟ (پلاتین، کلیپس، شنت)','آیا تومور مغزی فعال دارید؟');
+  scrStep=0;state='SCR';
+  return `ممنون ${data.first} جان. قبل از شروع ارزیابی، چند سوال کوتاه پزشکی دارم. لطفاً با بله یا خیر جواب بدید.\n\n${scrQ[0]}`;
+}
+function handleScreening(t){
+  if(!isYes(t)&&!isNo(t))return 'لطفاً با بله یا خیر جواب بدید.';
+  if(isYes(t)){data.screenOK=false;data.screenFails.push(scrQ[scrStep]);state='IDLE';
+    return `⛔ متأسفانه با توجه به شرایط پزشکی شما، امکان ادامه ارزیابی وجود ندارد. لطفاً با دکتر فتاحی مشورت خواهد شد.\n\n[SYSTEM: FLAG — SCREENING FAILED. Item: ${scrQ[scrStep]}]`}
+  scrStep++;
+  if(scrStep<scrQ.length)return scrQ[scrStep];
+  state='COMP';
+  return 'عالیه، مشکلی نیست ✅ بریم سراغ ارزیابی.\n\nکدوم مورد بیشتر اذیتتون می‌کنه؟ شماره‌شو بگید. چند مورد هم می‌تونید انتخاب کنید.\n\n۱. سردرد\n۲. مشکل خواب\n۳. اضطراب\n۴. افسردگی\n۵. مشکل تمرکز\n۶. خستگی مزمن\n۷. استرس\n۸. سایر';
+}
+
+function handleComplaints(t){
+  const n=parseNums(t);if(!n.length||n.some(x=>x<1||x>8))return 'لطفاً شماره مورد نظرتون رو بگید (۱ تا ۸).';
+  data.complaints=n.map(x=>({id:x,sev:0}));data.compIdx=0;return askSeverity();
+}
+function askSeverity(){
+  const c=data.complaints[data.compIdx];
+  if(!c){state='MORE';return 'مشکل دیگه‌ای هم هست؟ ۰ = نه، همین بود. یا شماره مورد جدید رو بگید.'}
+  const s=SEVERITY[c.id];state='SEV';
+  if(s.free)return s.t;
+  return s.t+'\n\n'+s.o.join('\n');
+}
+function handleSeverity(t){
+  const c=data.complaints[data.compIdx],s=SEVERITY[c.id];
+  if(s.free){c.sev=0;c.text=t;data.notes+=(data.notes?'\n':'')+'سایر: '+t;}
+  else{const n=parseNums(t);if(!n.length||n[0]<1||n[0]>5)return 'لطفاً یه شماره از ۱ تا ۵ بگید.';c.sev=n[0];}
+  data.compIdx++;return askSeverity();
+}
+function handleMore(t){
+  const n=parseNums(t);
+  if(n.length&&n[0]===0)return startAssessment();
+  if(n.length&&n[0]>=1&&n[0]<=8&&!data.complaints.find(c=>c.id===n[0])){
+    data.complaints.push({id:n[0],sev:0});data.compIdx=data.complaints.length-1;return askSeverity();}
+  return 'لطفاً ۰ بگید اگه مورد دیگه‌ای نیست، یا شماره مورد جدید رو بگید.';
+}
+
+function startAssessment(){
+  state='AINTRO';
+  return `خوبه ${data.first} جان 🌿 الان یه سری سوالات داریم که کمک می‌کنه وضعیتتون رو دقیق‌تر بررسی کنیم.\n\nحدود ۱۵ دقیقه طول می‌کشه. راحت جواب بدید — درست و غلط نداره.\nبر اساس ۴-۶ هفته اخیرتون جواب بدید.\n\n📝 نحوه پاسخ‌دهی:\n• بهترین روش: همه اعداد رو با فاصله بنویسید — مثلاً: 2 1 3\n• یکی‌یکی هم می‌شه — هر عدد رو جداگانه بفرستید\n• اعداد فارسی و انگلیسی هر دو قبوله\n\nبریم؟ 😊`;
+}
+function handleAIntro(){buildQueue();gIdx=0;return showGroup();}
+function buildQueue(){gQueue=[...L1,...L2,...L3];}
+
+function updateScaleLegend(g){
+  if(!g||g.gate||g.med){scaleLegend.classList.add('hidden');return;}
+  const mx=g.max||3;const cnt=g.keys.length;
+  let txt='';
+  if(mx===3)txt='۰ = اصلاً  ·  ۱ = گاهی  ·  ۲ = اغلب  ·  ۳ = تقریباً همیشه';
+  else txt=`مقیاس: ۰ تا ${mx}  (توضیحات هر گزینه در سوال بالا)`;
+  if(cnt>1)txt+=`   ◂ ${cnt} عدد بنویسید (مثلاً: ${Array.from({length:cnt},()=>Math.min(2,mx)).join(' ')})`;
+  scaleLegend.textContent=txt;
+  scaleLegend.classList.remove('hidden');
+}
+
+function updateProgress(){
+  if(!gQueue.length){progressWrap.classList.add('hidden');return;}
+  progressWrap.classList.remove('hidden');
+  const pct=Math.min(100,Math.round((gIdx/gQueue.length)*100));
+  progressFill.style.width=pct+'%';
+}
+
+function showGroup(){
+  if(gIdx>=gQueue.length)return closeAssessment();
+  const g=gQueue[gIdx];
+  pendingAnswers=[];
+  updateScaleLegend(g);
+  updateProgress();
+  if(g.gate){state='GROUP';return g.q;}
+  if(g.cond&&headGate===false){gIdx++;return 'عالیه! 👍 بریم سراغ بخش بعدی.\n\n'+showGroup();}
+  state='GROUP';return g.q;
+}
+
+function handleGroup(t){
+  const g=gQueue[gIdx];
+  if(g.gate){
+    if(isYes(t)){headGate=true;gIdx++;pendingAnswers=[];return showGroup();}
+    if(isNo(t)){headGate=false;gIdx++;pendingAnswers=[];return showGroup();}
+    return 'لطفاً با بله یا خیر جواب بدید.';
+  }
+  if(g.med){data.meds=t;gIdx++;pendingAnswers=[];let r='';
+    if(g.wf&&wfCount<7){r+=g.wf+'\n\n';wfCount++;}
+    if(g.tr)r+=g.tr+'\n\n';
+    return r+showGroup();
+  }
+  const nums=parseNums(t,true),cnt=g.keys.length,mx=g.max||3;
+  // If no numbers found, store as note and prompt again
+  if(!nums.length){
+    if(t.length>2)data.notes+=(data.notes?'\n':'')+t;
+    const rem=cnt-pendingAnswers.length;
+    return `لطفاً عدد وارد کنید (۰ تا ${mx}). ${rem} عدد باقی مونده.`;
+  }
+  // Validate incoming numbers
+  for(let i=0;i<nums.length;i++){if(nums[i]<0||nums[i]>mx)return `لطفاً اعداد بین ۰ تا ${mx} باشن.`}
+  // Add to pending answers
+  pendingAnswers=pendingAnswers.concat(nums);
+  // If we don't have enough yet, ask for the rest
+  if(pendingAnswers.length<cnt){
+    const got=pendingAnswers.length, rem=cnt-got;
+    return `✅ ${got} از ${cnt} — لطفاً ${rem} عدد دیگه وارد کنید.`;
+  }
+  // We have enough (or more) — store and advance
+  for(let i=0;i<cnt;i++){data.answers[g.keys[i]]=pendingAnswers[i];}
+  pendingAnswers=[];
+  gIdx++;let r='';
+  if(g.wf&&wfCount<7){r+=g.wf+'\n\n';wfCount++;}
+  if(g.tr)r+=g.tr+'\n\n';
+  return r+showGroup();
+}
+
+function closeAssessment(){
+  state='IDLE';
+  scaleLegend.classList.add('hidden');
+  progressWrap.classList.add('hidden');
+  saveClient();
+  setTimeout(()=>showActions(),300);
+  return `تمام شد! 🎉\n\nخیلی ممنون ${data.first} جان که وقت گذاشتید و با دقت جواب دادید.\n\n📋 پاسخ‌های شما ثبت شد\n👨‍⚕️ دکتر فتاحی بررسی می‌کنن\n📞 نتایج و برنامه درمان بهتون اطلاع داده می‌شه\n\nاگه سوالی دارید بپرسید. مراقب خودتون باشید 💚`;
+}
+
+function startReassess(){
+  prevAnswers={...data.answers};data.answers={};wfCount=0;
+  buildQueue();gIdx=0;state='AINTRO';
+  return `سلام دوباره ${data.first} جان! 🌿\nدکتر فتاحی درخواست بازارزیابی داده. دوباره همون سوالات رو مرور می‌کنیم تا ببینیم چه تغییراتی داشتید.\n\nبر اساس ۴-۶ هفته اخیر جواب بدید.\nبریم؟`;
+}
+
+// ─── Reports ────────────────────────────────────────────
+function cap(keys){let m=0;keys.forEach(k=>{m=Math.max(m,data.answers[k]||0)});return m;}
+function interp(s){return s<=6?'خفیف':s<=13?'متوسط':'بالا';}
+
+function clinicalReport(){
+  const a=data.answers,d=persianDate(),gen=data.gender==='male'?'مرد':data.gender==='female'?'زن':'نامشخص';
+  const l1k=Object.keys(a).filter(k=>k.startsWith('L1Q'));
+  const tfs=l1k.reduce((s,k)=>s+(a[k]||0),0);
+  const core={'L1Q3':'Q3 آماده‌باش','L1Q7':'Q7 تأخیر خواب','L1Q8':'Q8 پیوستگی خواب','L1Q9':'Q9 بیداری','L1Q10':'Q10 حساسیت','L1Q11':'Q11 ریکاوری','L1Q12':'Q12 امنیت','L1Q19':'Q19 استراحت','L1Q20':'Q20 صبح'};
+  const flagged=Object.entries(core).filter(([k])=>(a[k]||0)>=2).map(([,v])=>v);
+  const l2c=L2.map(g=>({l:g.id,c:cap(g.keys),k:g.keys}));
+  const l2t=l2c.reduce((s,x)=>s+x.c,0);
+  const doms=[l2c[2]?.c||0,l2c[3]?.c||0,l2c[4]?.c||0];
+  const domN=['Salience','DMN','Executive'][doms.indexOf(Math.max(...doms))];
+  const revSet=new Set(['L3Q1','L3Q16','L3Q18','L3Q19','L3Q20']);
+  const l3s={};Object.keys(a).filter(k=>k.startsWith('L3Q')).forEach(k=>{l3s[k]=revSet.has(k)?3-a[k]:a[k]});
+  const l3c=L3.map(g=>({l:g.id,c:Math.max(...g.keys.map(k=>l3s[k]??0)),k:g.keys}));
+  const l3t=l3c.reduce((s,x)=>s+x.c,0);
+  const comp=data.complaints.map(c=>`${COMPLAINT_LABELS[c.id]||'سایر'} — سطح ${c.sev}`).join('\n');
+  const hs=a.L1Q13===undefined&&a.L1Q13!==0;
+  let r='═══════════════════════════════════════\n📊 گزارش بالینی — TMN Neuro-Regulation Assessment\n═══════════════════════════════════════\n\n';
+  r+=`🗓️ تاریخ: ${d}\n👤 مراجع: ${data.name}\n🔢 سن: ${data.age} | جنسیت: ${gen}\n📱 تماس: ${data.phone}\n\n`;
+  r+=`───────────────────────────────────────\n⚠️ غربالگری: ${data.screenOK?'PASS ✅':'FAIL ⛔'}\n───────────────────────────────────────\n\n`;
+  r+=`🎯 شکایت اصلی:\n${comp}\n\n───────────────────────────────────────\n📋 لایه اول: پایه (Foundation)\n───────────────────────────────────────\n\n`;
+  r+=`A) وضعیت بدن: Q1=${a.L1Q1??'-'} Q2=${a.L1Q2??'-'} Q3◆=${a.L1Q3??'-'}\n`;
+  r+=`B) تنفس/انرژی: Q4=${a.L1Q4??'-'} Q5=${a.L1Q5??'-'} Q6=${a.L1Q6??'-'}\n`;
+  r+=`C) خواب◆: Q7◆=${a.L1Q7??'-'} Q8◆=${a.L1Q8??'-'} Q9◆=${a.L1Q9??'-'}\n`;
+  r+=`D) حساسیت: Q10◆=${a.L1Q10??'-'}\nE) ریکاوری: Q11◆=${a.L1Q11??'-'}\nF) امنیت: Q12◆=${a.L1Q12??'-'}\n`;
+  r+=hs?'G) سردرد: SKIPPED\n':`G) سردرد: Q13=${a.L1Q13??'-'} Q14=${a.L1Q14??'-'} Q15=${a.L1Q15??'-'} Q16=${a.L1Q16??'-'}\n`;
+  r+=`H) نوسان: Q17=${a.L1Q17??'-'}\nI) بار ذهنی: Q18=${a.L1Q18??'-'}\nJ) اثر استراحت: Q19◆=${a.L1Q19??'-'}\n`;
+  r+=`K) صبح/شب: Q20◆=${a.L1Q20??'-'} Q21=${a.L1Q21??'-'}\nL) اشتها: Q22=${a.L1Q22??'-'} Q23=${a.L1Q23??'-'} Q24=${a.L1Q24??'-'}\n`;
+  r+=`M) داروها: ${data.meds||'ندارد'}\n\n📊 امتیاز کل پایه (TFS): ${tfs}\n⚠️ آیتم‌های هسته‌ای (◆) ≥2: ${flagged.length?flagged.join('، '):'ندارد'}\n\n`;
+  r+='───────────────────────────────────────\n📋 لایه دوم: شبکه‌ای (Network)\n───────────────────────────────────────\n\n';
+  const l2n=['A) مهار پاسخ','B) سوئیچ','C) سالینس','D) نشخوار/DMN','E) اجرایی','F) انعطاف','G) عملکردی'];
+  l2c.forEach((x,i)=>{r+=`${l2n[i]}: ${x.k.map(k=>`${k.replace('L2','')}◆=${a[k]??'-'}`).join(' ')} → Cap: ${x.c}\n`});
+  r+=`\n📊 L2-T: ${l2t}/21\n🎯 شبکه غالب: ${domN}\nتفسیر: ${interp(l2t)}\n\n`;
+  r+='───────────────────────────────────────\n📋 لایه سوم: یکپارچگی (Integration)\n───────────────────────────────────────\n\n⚠️ (R) = برعکس امتیازدهی شده\n\n';
+  const l3n=['A) انتقال','B) پایداری','C) مدیریت انتقال','D) وابستگی','E) تعارض','F) انطباق','G) یکپارچگی'];
+  l3c.forEach((x,i)=>{const g=L3[i];r+=`${l3n[i]}: ${g.keys.map(k=>{const raw=a[k]??'-';return(g.rev||[]).includes(k)?`${k.replace('L3','')}(R)=${raw}→${l3s[k]}`:`${k.replace('L3','')}=${raw}`}).join(' ')} → Cap: ${x.c}\n`});
+  r+=`\n📊 L3-T: ${l3t}/21\nتفسیر: ${interp(l3t)}\n\n`;
+  r+='───────────────────────────────────────\n📊 خلاصه اجرایی\n───────────────────────────────────────\n\n';
+  r+='| لایه | امتیاز | وضعیت |\n|------|--------|-------|\n';
+  r+=`| پایه (TFS) | ${tfs} | ${tfs<=20?'خفیف':tfs<=40?'متوسط':'بالا'} |\n`;
+  r+=`| شبکه (L2-T) | ${l2t}/21 | ${interp(l2t)} |\n| یکپارچگی (L3-T) | ${l3t}/21 | ${interp(l3t)} |\n\n`;
+  r+=`🎯 شبکه غالب: ${domN}\n\n⚠️ پرچم‌های بالینی:\n${flagged.length?flagged.join('\n'):'ندارد'}\n\n💊 وضعیت دارویی:\n${data.meds||'ندارد'}\n\n📝 یادداشت:\n${data.notes||'موردی ثبت نشده'}\n\n═══════════════════════════════════════`;
+  if(prevAnswers){
+    const pL1=Object.keys(prevAnswers).filter(k=>k.startsWith('L1Q')).reduce((s,k)=>s+(prevAnswers[k]||0),0);
+    const pL2c=L2.map(g=>Math.max(...g.keys.map(k=>prevAnswers[k]||0)));const pL2t=pL2c.reduce((s,x)=>s+x,0);
+    const pRevS={};Object.keys(prevAnswers).filter(k=>k.startsWith('L3Q')).forEach(k=>{pRevS[k]=revSet.has(k)?3-prevAnswers[k]:prevAnswers[k]});
+    const pL3c=L3.map(g=>Math.max(...g.keys.map(k=>pRevS[k]??0)));const pL3t=pL3c.reduce((s,x)=>s+x,0);
+    r+='\n\n───────────────────────────────────────\n📊 مقایسه با ارزیابی قبلی\n───────────────────────────────────────\n\n';
+    r+=`| شاخص | قبلی | فعلی | تغییر |\n|------|------|------|-------|\n`;
+    r+=`| TFS (پایه) | ${pL1} | ${tfs} | ${tfs-pL1>=0?'+':''}${tfs-pL1} |\n`;
+    r+=`| L2-T (شبکه) | ${pL2t} | ${l2t} | ${l2t-pL2t>=0?'+':''}${l2t-pL2t} |\n`;
+    r+=`| L3-T (یکپارچگی) | ${pL3t} | ${l3t} | ${l3t-pL3t>=0?'+':''}${l3t-pL3t} |\n`;
+    const worse=[],better=[];
+    Object.keys(data.answers).forEach(k=>{if(prevAnswers[k]!==undefined){const diff=data.answers[k]-prevAnswers[k];if(diff>=1)worse.push(k);if(diff<=-1)better.push(k);}});
+    r+=`\n⚠️ آیتم‌هایی که بدتر شدن:\n${worse.length?worse.join('، '):'ندارد'}\n`;
+    r+=`\n✅ آیتم‌هایی که بهتر شدن:\n${better.length?better.join('، '):'ندارد'}\n`;
+  }
+  return r;
+}
+
+function adminReport(){
+  const d=persianDate(),gen=data.gender==='male'?'مرد':data.gender==='female'?'زن':'نامشخص';
+  const gc=data.gender==='male'?'M':data.gender==='female'?'F':'?';
+  const mc=data.complaints[0];const ml=mc?COMPLAINT_LABELS[mc.id]:'-';
+  const comp=data.complaints.map(c=>`${COMPLAINT_LABELS[c.id]||'سایر'} — سطح ${c.sev}`).join('، ');
+  const hasMeds=data.meds&&data.meds!=='ندارد'&&data.meds.trim();
+  let r='═══════════════════════════════════════\n📋 گزارش اداری — پروفایل مراجع\n═══════════════════════════════════════\n\n';
+  r+=`👤 نام: ${data.name}\n📱 تلفن: ${data.phone}\n🔢 سن: ${data.age} | جنسیت: ${gen}\n🗓️ تاریخ ارزیابی: ${d}\n\n`;
+  r+=`───────────────────────────────────────\n✅ غربالگری: ${data.screenOK?'قبول':'رد — نیاز به تأیید دکتر'}\n───────────────────────────────────────\n\n`;
+  r+=`🎯 شکایت اصلی: ${comp}\n\n💊 داروها: ${data.meds||'ندارد'}\n\n`;
+  r+='───────────────────────────────────────\n📝 اقدامات لازم:\n───────────────────────────────────────\n\n';
+  r+='1. ☐ پروفایل در Google Sheet ایجاد شود\n';
+  r+=`2. ☐ نام پیشنهادی فایل: ${data.name}-${data.age}${gc}-${ml}-${new Date().toISOString().split('T')[0]}\n`;
+  r+='3. ☐ وقت QEEG هماهنگ شود\n4. ☐ رضایت‌نامه امضا شده اسکن و ذخیره شود\n5. ☐ فرم غربالگری بایگانی شود\n';
+  if(hasMeds)r+='6. ☐ لیست داروها به دکتر فتاحی اطلاع داده شود\n';
+  r+='\n📅 قدم بعدی: هماهنگی وقت QEEG با مراجع\n\n═══════════════════════════════════════';
+  return r;
+}
+
+// ─── localStorage ───────────────────────────────────────
+const STORAGE_KEY='tmn_clients';
+function loadClients(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]}catch{return[]}}
+function saveClient(){
+  const clients=loadClients();
+  const record={
+    id:Date.now(), date:new Date().toISOString(), datePersian:persianDate(),
+    name:data.name, first:data.first, phone:data.phone, age:data.age, gender:data.gender,
+    screenOK:data.screenOK, screenFails:data.screenFails,
+    complaints:data.complaints, answers:{...data.answers}, meds:data.meds, notes:data.notes,
+    prevAnswers:prevAnswers?{...prevAnswers}:null
+  };
+  // Update existing or add new
+  const existing=clients.findIndex(c=>c.phone===data.phone&&c.name===data.name);
+  if(existing>=0){record.id=clients[existing].id;clients[existing]=record;}
+  else clients.unshift(record);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(clients));
+  updateRecordsBtn();
+}
+function updateRecordsBtn(){
+  const btn=document.getElementById('recordsBtn');
+  if(btn)btn.style.display=loadClients().length>0?'inline-flex':'none';
+}
+
+function downloadText(filename,text){
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── UI ─────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const msgBox=$('messages'), inputField=$('inputField'), welcomeEl=$('welcome'), inputBar=$('inputBar'), resetBtn=$('resetBtn'), actionsBar=$('actionsBar'), scaleLegend=$('scaleLegend'), progressWrap=$('progressWrap'), progressFill=$('progressFill');
+
+function addMsg(role,text,withDownload){
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  const isReport=text.includes('═══')||text.includes('───');
+  const bubble=document.createElement('div');
+  bubble.className='bubble '+role+(isReport?' report':'');
+  const inner=document.createElement('div');
+  inner.className='bubble-text';
+  inner.textContent=text;
+  bubble.appendChild(inner);
+  if(isReport&&withDownload){
+    const actions=document.createElement('div');
+    actions.className='report-actions';
+    const dlBtn=document.createElement('button');
+    dlBtn.className='dl-btn';
+    dlBtn.textContent='📥 دانلود گزارش';
+    const reportText=text;
+    const fname=(data.name||'report')+'-'+new Date().toISOString().split('T')[0]+'.txt';
+    dlBtn.onclick=()=>downloadText(fname,reportText);
+    actions.appendChild(dlBtn);
+    bubble.appendChild(actions);
+  }
+  div.appendChild(bubble);msgBox.appendChild(div);
+  msgBox.scrollTop=msgBox.scrollHeight;
+}
+
+function showActions(){actionsBar.classList.remove('hidden');}
+function hideActions(){actionsBar.classList.add('hidden');}
+
+function triggerClinical(){
+  const r=clinicalReport();
+  addMsg('assistant',r,true);
+  saveClient();
+}
+function triggerAdmin(){
+  const r=adminReport();
+  addMsg('assistant',r,true);
+  saveClient();
+}
+function triggerReassess(){
+  hideActions();
+  const r=startReassess();
+  addMsg('assistant',r);
+}
+
+// ─── Records Panel ──────────────────────────────────────
+function showRecords(){
+  const panel=$('recordsPanel');
+  const list=$('recordsList');
+  list.innerHTML='';
+  const clients=loadClients();
+  if(!clients.length){list.innerHTML='<div class="no-records">هنوز مراجعی ثبت نشده</div>';panel.classList.remove('hidden');return;}
+  clients.forEach(c=>{
+    const card=document.createElement('div');card.className='record-card';
+    const gen=c.gender==='male'?'مرد':c.gender==='female'?'زن':'';
+    const comp=(c.complaints||[]).map(x=>COMPLAINT_LABELS[x.id]||'سایر').join('، ');
+    card.innerHTML=`<div class="record-name">${c.name}</div><div class="record-meta">${c.datePersian} | سن: ${c.age} | ${gen} | ${comp}</div><div class="record-btns"></div>`;
+    const btns=card.querySelector('.record-btns');
+    const clinBtn=document.createElement('button');clinBtn.className='dl-btn';clinBtn.textContent='📊 گزارش بالینی';
+    clinBtn.onclick=(e)=>{e.stopPropagation();loadAndReport(c,'clinical')};
+    const admBtn=document.createElement('button');admBtn.className='dl-btn';admBtn.textContent='📋 گزارش اداری';
+    admBtn.onclick=(e)=>{e.stopPropagation();loadAndReport(c,'admin')};
+    btns.appendChild(clinBtn);btns.appendChild(admBtn);
+    list.appendChild(card);
+  });
+  panel.classList.remove('hidden');
+}
+function hideRecords(){$('recordsPanel').classList.add('hidden');}
+function loadAndReport(c,type){
+  // Temporarily load client data to generate report
+  const backup={...data};const backupPrev=prevAnswers;
+  data={name:c.name,first:c.first,phone:c.phone,age:c.age,gender:c.gender,
+    screenOK:c.screenOK,screenFails:c.screenFails||[],complaints:c.complaints||[],
+    compIdx:0,answers:c.answers||{},meds:c.meds||'',notes:c.notes||''};
+  prevAnswers=c.prevAnswers||null;
+  const report=type==='clinical'?clinicalReport():adminReport();
+  const fname=c.name+'-'+type+'-'+new Date().toISOString().split('T')[0]+'.txt';
+  downloadText(fname,report);
+  // Restore
+  Object.assign(data,backup);prevAnswers=backupPrev;
+}
+
+function startChat(){
+  initData();state='NAME';
+  welcomeEl.classList.add('hidden');
+  msgBox.classList.remove('hidden');
+  inputBar.classList.remove('hidden');
+  hideActions();
+  resetBtn.classList.add('show');
+  addMsg('assistant','سلام و خوش آمدید! 🌿\nمن دستیار ارزیابی کلینیک TMN هستم.\nلطفاً اسم کاملتون رو بگید.');
+  inputField.focus();
+}
+
+function resetChat(){
+  if(state&&state!=='IDLE'&&!confirm('آیا مطمئنید؟ اطلاعات ذخیره نشده از بین می‌رود.'))return;
+  msgBox.innerHTML='';
+  msgBox.classList.add('hidden');
+  inputBar.classList.add('hidden');
+  scaleLegend.classList.add('hidden');
+  progressWrap.classList.add('hidden');
+  hideActions();
+  resetBtn.classList.remove('show');
+  welcomeEl.classList.remove('hidden');
+  state='';initData();prevAnswers=null;
+  updateRecordsBtn();
+}
+
+function showTyping(){
+  const div=document.createElement('div');div.className='msg assistant';div.id='typingMsg';
+  const bubble=document.createElement('div');bubble.className='bubble assistant';
+  bubble.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  div.appendChild(bubble);msgBox.appendChild(div);
+  msgBox.scrollTop=msgBox.scrollHeight;
+}
+function removeTyping(){const el=$('typingMsg');if(el)el.remove();}
+
+function handleSend(e){
+  e.preventDefault();
+  const t=inputField.value.trim();
+  if(!t)return;
+  addMsg('user',t);
+  inputField.value='';inputField.style.height='auto';
+  showTyping();
+  setTimeout(()=>{
+    removeTyping();
+    const resp=process(t);
+    const isReport=resp.includes('═══');
+    addMsg('assistant',resp,isReport);
+    if(state==='IDLE'){showActions();saveClient();}
+    inputField.focus();
+  },450);
+}
+
+inputField.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend(e);}
+});
+inputField.addEventListener('input',()=>{
+  inputField.style.height='auto';
+  inputField.style.height=Math.min(inputField.scrollHeight,120)+'px';
+});
+
+// Init — check for existing records
+updateRecordsBtn();
+</script>
+</body>
+</html>

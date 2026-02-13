@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>راهنمای استفاده — سیستم ارزیابی بالینی TMN</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #12121a;
+  --card: #1a1a25;
+  --text: #e8e8f0;
+  --muted: #9898a8;
+  --accent: #4ecdc4;
+  --border: #2a2a3a;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Vazirmatn',sans-serif; background:var(--bg); color:var(--text);
+  direction:rtl; line-height:2; padding:2rem; max-width:800px; margin:0 auto;
+}
+h1 { font-size:1.6rem; color:var(--accent); margin-bottom:0.5rem; }
+h2 { font-size:1.2rem; color:var(--accent); margin:2rem 0 0.8rem; padding-bottom:0.4rem; border-bottom:1px solid var(--border); }
+h3 { font-size:1rem; margin:1.2rem 0 0.5rem; }
+p, li { font-size:0.95rem; color:var(--muted); }
+ul, ol { padding-right:1.5rem; margin:0.5rem 0; }
+li { margin:0.3rem 0; }
+strong { color:var(--text); }
+code {
+  background:var(--card); color:var(--accent); padding:0.15rem 0.5rem;
+  border-radius:4px; font-family:'Vazirmatn',monospace; font-size:0.85rem;
+  border:1px solid var(--border); direction:ltr; display:inline-block;
+}
+.box {
+  background:var(--card); border:1px solid var(--border); border-radius:8px;
+  padding:1rem 1.2rem; margin:1rem 0;
+}
+.box.warn { border-color:#e74c3c; }
+.box.info { border-color:var(--accent); }
+.step { display:flex; gap:0.8rem; margin:0.8rem 0; align-items:flex-start; }
+.step-num {
+  background:var(--accent); color:var(--bg); width:28px; height:28px;
+  border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:0.85rem; flex-shrink:0; margin-top:0.3rem;
+}
+.step-text { flex:1; }
+.tag {
+  display:inline-block; background:var(--accent); color:var(--bg);
+  padding:0.1rem 0.6rem; border-radius:4px; font-size:0.8rem; font-weight:600;
+}
+hr { border:none; border-top:1px solid var(--border); margin:2rem 0; }
+.footer { text-align:center; color:var(--border); font-size:0.8rem; margin-top:3rem; }
+</style>
+</head>
+<body>
+
+<h1>⚡ راهنمای استفاده از سیستم ارزیابی بالینی TMN</h1>
+<p>فناوری‌های سلامت عصبی — Neural Wellness Technologies</p>
+
+<hr>
+
+<h2>۱. شروع کار</h2>
+
+<div class="step">
+  <div class="step-num">۱</div>
+  <div class="step-text"><strong>فایل را باز کنید</strong> — فایل <code>clinical-intake.html</code> را در مرورگر خود باز کنید (Chrome، Firefox، Edge). کافیه روی فایل دو بار کلیک کنید.</div>
+</div>
+<div class="step">
+  <div class="step-num">۲</div>
+  <div class="step-text"><strong>دکمه «شروع ارزیابی» را بزنید</strong> — صفحه خوش‌آمدگویی نمایش داده می‌شود. با زدن این دکمه، چت شروع می‌شود.</div>
+</div>
+<div class="step">
+  <div class="step-num">۳</div>
+  <div class="step-text"><strong>اطلاعات مراجع را وارد کنید</strong> — سیستم به ترتیب از شما می‌پرسد: نام کامل، شماره تلفن، سن.</div>
+</div>
+
+<h2>۲. مراحل ارزیابی</h2>
+
+<p>ارزیابی از ۵ مرحله تشکیل شده:</p>
+
+<div class="box info">
+  <h3>مرحله ۱: اطلاعات اولیه (۲ دقیقه)</h3>
+  <p>نام، تلفن، سن — تایپ کنید و Enter بزنید.</p>
+</div>
+
+<div class="box info">
+  <h3>مرحله ۲: غربالگری پزشکی (۲ دقیقه)</h3>
+  <p>سوالات بله/خیر درباره شرایط پزشکی. جواب بدید: <code>بله</code> یا <code>خیر</code></p>
+  <p>⛔ اگر هر کدام «بله» باشد، ارزیابی متوقف می‌شود و باید با دکتر فتاحی مشورت شود.</p>
+</div>
+
+<div class="box info">
+  <h3>مرحله ۳: شکایت اصلی (۲ دقیقه)</h3>
+  <p>لیست مشکلات نمایش داده می‌شود. <strong>شماره</strong> مورد نظر را تایپ کنید. برای چند مورد، شماره‌ها را با فاصله بنویسید.</p>
+  <p>مثال: <code>3 5 7</code> = اضطراب + مشکل تمرکز + استرس</p>
+  <p>بعد برای هر مشکل، شدت آن پرسیده می‌شود (۱ تا ۵).</p>
+</div>
+
+<div class="box info">
+  <h3>مرحله ۴: پرسشنامه ۶۴ سوالی (۱۵-۲۰ دقیقه)</h3>
+  <p>سوالات گروهی پرسیده می‌شوند. برای هر گروه، اعداد را <strong>با فاصله</strong> تایپ کنید.</p>
+  <p>مثال: اگر ۳ سوال پرسیده شد → <code>2 1 3</code></p>
+  <p>مقیاس‌ها قبل از هر بخش یادآوری می‌شوند. توجه کنید بعضی سوالات مقیاس متفاوتی دارند (۰-۳، ۰-۴، ۰-۵).</p>
+</div>
+
+<div class="box info">
+  <h3>مرحله ۵: پایان ارزیابی</h3>
+  <p>پیام تشکر نمایش داده می‌شود و <strong>سه دکمه</strong> ظاهر می‌شود.</p>
+</div>
+
+<h2>۳. نکات مهم هنگام پاسخ‌دهی</h2>
+
+<ul>
+  <li>اعداد فارسی و انگلیسی هر دو قبول هستند: <code>۲</code> = <code>2</code></li>
+  <li>برای سوالات گروهی، اعداد را با <strong>فاصله</strong> یا <strong>کاما</strong> جدا کنید</li>
+  <li>برای بله/خیر: <code>بله</code> <code>آره</code> <code>خیر</code> <code>نه</code> همه قبول هستند</li>
+  <li>اگر مراجع خواست توضیح بدهد، می‌تواند متن آزاد تایپ کند — در یادداشت گزارش ثبت می‌شود</li>
+</ul>
+
+<h2>۴. گزارش‌ها</h2>
+
+<p>بعد از اتمام ارزیابی، <strong>سه دکمه</strong> در پایین صفحه ظاهر می‌شود:</p>
+
+<div class="box">
+  <h3>📊 گزارش بالینی (دکتر فتاحی)</h3>
+  <p>گزارش کامل با تمام امتیازات، لایه‌ها، شبکه غالب، پرچم‌های بالینی و خلاصه اجرایی.</p>
+  <p><strong>روش دیگر:</strong> تایپ کنید <code>Ali - 189419</code></p>
+</div>
+
+<div class="box">
+  <h3>📋 گزارش اداری (آتوسا)</h3>
+  <p>پروفایل مراجع با اقدامات لازم: ساخت پروفایل، هماهنگی QEEG، بایگانی فرم‌ها.</p>
+  <p><strong>روش دیگر:</strong> تایپ کنید <code>Atousa:12271227</code></p>
+</div>
+
+<div class="box">
+  <h3>🔄 بازارزیابی</h3>
+  <p>برای مراجعینی که قبلاً ارزیابی شده‌اند. پرسشنامه دوباره اجرا می‌شود و گزارش مقایسه‌ای تولید می‌شود.</p>
+  <p><strong>روش دیگر:</strong> تایپ کنید <code>بازارزیابی</code></p>
+</div>
+
+<div class="box info">
+  <h3>📥 دانلود گزارش</h3>
+  <p>روی هر گزارش تولید شده، دکمه <strong>«📥 دانلود گزارش»</strong> وجود دارد. با زدن آن، گزارش به صورت فایل متنی (<code>.txt</code>) دانلود می‌شود.</p>
+</div>
+
+<h2>۵. سوابق مراجعین</h2>
+
+<p>تمام ارزیابی‌های تکمیل‌شده به صورت خودکار در مرورگر ذخیره می‌شوند.</p>
+
+<div class="step">
+  <div class="step-num">۱</div>
+  <div class="step-text">در صفحه اصلی (خوش‌آمدگویی)، دکمه <strong>«سوابق مراجعین»</strong> را بزنید.</div>
+</div>
+<div class="step">
+  <div class="step-num">۲</div>
+  <div class="step-text">لیست مراجعین قبلی با نام، تاریخ و شکایت اصلی نمایش داده می‌شود.</div>
+</div>
+<div class="step">
+  <div class="step-num">۳</div>
+  <div class="step-text">برای هر مراجع، می‌توانید <strong>گزارش بالینی</strong> یا <strong>گزارش اداری</strong> را مستقیماً دانلود کنید.</div>
+</div>
+
+<div class="box warn">
+  <h3>⚠️ توجه مهم درباره ذخیره‌سازی</h3>
+  <p>اطلاعات در <strong>حافظه مرورگر (localStorage)</strong> ذخیره می‌شود. یعنی:</p>
+  <ul>
+    <li>اگر کش مرورگر را پاک کنید، اطلاعات از بین می‌رود</li>
+    <li>در مرورگر دیگر یا کامپیوتر دیگر، اطلاعات وجود ندارد</li>
+    <li><strong>حتماً گزارش‌ها را دانلود کنید</strong> تا نسخه پشتیبان داشته باشید</li>
+  </ul>
+</div>
+
+<h2>۶. دکمه شروع مجدد</h2>
+
+<p>آیکون 🔄 در گوشه بالای صفحه، چت فعلی را کاملاً پاک می‌کند و به صفحه اصلی برمی‌گردد. <strong>اطلاعات ذخیره‌شده قبلی از بین نمی‌رود.</strong></p>
+
+<h2>۷. خلاصه سریع برای آتوسا</h2>
+
+<div class="box">
+<p><strong>روند کار هر مراجع:</strong></p>
+<ol>
+  <li>فایل را باز کن → «شروع ارزیابی» بزن</li>
+  <li>نام، تلفن، سن مراجع را وارد کن</li>
+  <li>سوالات غربالگری را بخوان و جواب مراجع را تایپ کن</li>
+  <li>شکایات اصلی را ثبت کن</li>
+  <li>پرسشنامه را با مراجع انجام بده (مراجع عدد می‌گوید، تو تایپ می‌کنی)</li>
+  <li>بعد از اتمام → دکمه «📊 گزارش بالینی» برای دکتر فتاحی</li>
+  <li>دکمه «📋 گزارش اداری» برای خودت</li>
+  <li>هر دو گزارش را <strong>دانلود</strong> کن</li>
+  <li>دکمه 🔄 بالا بزن برای مراجع بعدی</li>
+</ol>
+</div>
+
+<hr>
+
+<div class="box">
+<h3>کدهای دسترسی سریع</h3>
+<p>اگر ترجیح می‌دهید از کد استفاده کنید به جای دکمه:</p>
+<ul>
+  <li>گزارش بالینی دکتر فتاحی: <code>Ali - 189419</code></li>
+  <li>گزارش اداری آتوسا: <code>Atousa:12271227</code></li>
+  <li>شروع بازارزیابی: <code>بازارزیابی</code></li>
+</ul>
+</div>
+
+<div class="footer">
+  TMN Clinical Intake System v1.0 — Neural Wellness Technologies<br>
+  فناوری‌های سلامت عصبی
+</div>
+
+</body>
+</html>
