@@ -49,8 +49,8 @@ body {
 /* Header */
 .header {
   display:flex; align-items:center; justify-content:space-between;
-  padding:0.8rem 1.2rem; background:var(--bg-card);
-  border-bottom:1px solid var(--border); flex-shrink:0;
+  padding:0.8rem 1.2rem; background:linear-gradient(180deg,#1e1e2e,var(--bg-card));
+  border-bottom:2px solid var(--accent-dim); flex-shrink:0;
 }
 .header-brand { display:flex; align-items:center; gap:0.8rem; }
 .header-logo {
@@ -80,7 +80,8 @@ body {
   flex:1; display:flex; align-items:center; justify-content:center; padding:2rem;
 }
 .welcome-inner { text-align:center; max-width:400px; }
-.welcome-icon { font-size:4rem; margin-bottom:1.5rem; }
+.welcome-icon { font-size:4rem; margin-bottom:1.5rem; animation:pulse 3s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 transparent)} 50%{transform:scale(1.08);filter:drop-shadow(0 0 20px var(--accent-glow))} }
 .welcome-inner h2 { font-size:1.4rem; font-weight:600; margin-bottom:1rem; }
 .welcome-inner p { font-size:0.95rem; color:var(--text-secondary); line-height:1.8; margin-bottom:2rem; }
 .start-btn {
@@ -89,17 +90,22 @@ body {
   font-family:inherit; border-radius:var(--radius); cursor:pointer;
   transition:all 0.2s; box-shadow:0 0 20px var(--accent-glow);
 }
-.start-btn:hover { background:var(--accent-dim); transform:translateY(-1px); }
+.start-btn:hover { background:var(--accent-dim); transform:translateY(-2px); box-shadow:0 4px 24px var(--accent-glow); }
+.start-btn:active { transform:translateY(0); }
 
 /* Scale legend */
 .scale-legend {
-  padding:0.5rem 1rem; background:var(--bg-card); border-bottom:1px solid var(--border);
-  font-size:0.82rem; color:var(--accent); text-align:center; flex-shrink:0;
-  letter-spacing:0.02em; direction:rtl;
+  padding:0.5rem 1rem; background:linear-gradient(90deg,var(--bg-card),#1a2a28,var(--bg-card));
+  border-bottom:1px solid var(--border); font-size:0.82rem; color:var(--accent);
+  text-align:center; flex-shrink:0; letter-spacing:0.02em; direction:rtl;
 }
 
+/* Progress bar */
+.progress-wrap { height:3px; background:var(--bg-primary); flex-shrink:0; }
+.progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--accent-dim),var(--accent)); transition:width 0.5s ease; border-radius:0 0 2px 2px; }
+
 /* Messages */
-.messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.6rem; }
+.messages { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.6rem; scroll-behavior:smooth; }
 .msg { display:flex; animation:msgIn 0.3s ease; }
 .msg.assistant { justify-content:flex-start; }
 .msg.user { justify-content:flex-end; }
@@ -110,10 +116,12 @@ body {
 .bubble.assistant {
   background:var(--bg-card); color:var(--text-primary);
   border:1px solid var(--border); border-top-right-radius:4px;
+  border-right:3px solid var(--accent-dim);
 }
 .bubble.user {
   background:var(--accent); color:var(--bg-primary);
   border-top-left-radius:4px; font-weight:500;
+  box-shadow:0 2px 8px rgba(78,205,196,0.2);
 }
 .bubble.report {
   max-width:95%; background:var(--bg-primary);
@@ -122,7 +130,7 @@ body {
   box-shadow:0 0 20px var(--accent-glow);
 }
 .bubble-text { direction:rtl; unicode-bidi:plaintext; }
-@keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes msgIn { from{opacity:0;transform:translateY(8px) scale(0.98)} to{opacity:1;transform:translateY(0) scale(1)} }
 
 /* Typing indicator */
 .typing { display:flex; gap:4px; padding:0.3rem 0.2rem; direction:ltr; }
@@ -250,6 +258,7 @@ body {
       </div>
     </div>
     <div class="scale-legend hidden" id="scaleLegend">۰ = اصلاً  ·  ۱ = گاهی  ·  ۲ = اغلب  ·  ۳ = تقریباً همیشه</div>
+    <div class="progress-wrap hidden" id="progressWrap"><div class="progress-fill" id="progressFill"></div></div>
     <div class="messages hidden" id="messages"></div>
     <div class="actions-bar hidden" id="actionsBar">
       <button class="action-btn primary" onclick="triggerClinical()">📊 گزارش بالینی (دکتر فتاحی)</button>
@@ -278,14 +287,15 @@ body {
 // ─── Helpers ────────────────────────────────────────────
 const FARSI_DIGITS={'۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
 function toEn(s){return s.replace(/[۰-۹]/g,d=>FARSI_DIGITS[d])}
-function parseNums(t){
+function parseNums(t,pairMode){
   const s=toEn(t.trim());
-  // Detect "question.answer" format: 1.3  2.1  3.1 or 1.3/2.1/3.1
-  const pairs=s.match(/\d+\s*[.\-:]\s*(\d+)/g);
-  if(pairs&&pairs.length>0){
-    return pairs.map(p=>{const m=p.match(/\d+\s*[.\-:]\s*(\d+)/);return Number(m[1])});
+  // Detect "question.answer" format ONLY in group state
+  if(pairMode){
+    const pairs=s.match(/\d+\s*[.\-:]\s*(\d+)/g);
+    if(pairs&&pairs.length>0){
+      return pairs.map(p=>{const m=p.match(/\d+\s*[.\-:]\s*(\d+)/);return Number(m[1])});
+    }
   }
-  // Plain numbers separated by anything
   return s.match(/\d+/g)?.map(Number)||[];
 }
 function isYes(t){t=t.trim();return['بله','آره','اره','بلی','yes','1','۱'].includes(t)}
@@ -447,6 +457,7 @@ function handleGender(t){
 function handlePhone(t){data.phone=toEn(t.replace(/\s+/g,''));state='AGE';return 'سنتون چنده؟'}
 function handleAge(t){
   const n=parseNums(t);if(!n.length)return 'لطفاً سنتون رو به عدد بگید.';
+  if(n[0]<2||n[0]>120)return 'لطفاً سن معتبر وارد کنید.';
   data.age=n[0]; return startScreening();
 }
 
@@ -510,11 +521,19 @@ function updateScaleLegend(g){
   scaleLegend.classList.remove('hidden');
 }
 
+function updateProgress(){
+  if(!gQueue.length){progressWrap.classList.add('hidden');return;}
+  progressWrap.classList.remove('hidden');
+  const pct=Math.min(100,Math.round((gIdx/gQueue.length)*100));
+  progressFill.style.width=pct+'%';
+}
+
 function showGroup(){
   if(gIdx>=gQueue.length)return closeAssessment();
   const g=gQueue[gIdx];
   pendingAnswers=[];
   updateScaleLegend(g);
+  updateProgress();
   if(g.gate){state='GROUP';return g.q;}
   if(g.cond&&headGate===false){gIdx++;return 'عالیه! 👍 بریم سراغ بخش بعدی.\n\n'+showGroup();}
   state='GROUP';return g.q;
@@ -532,7 +551,7 @@ function handleGroup(t){
     if(g.tr)r+=g.tr+'\n\n';
     return r+showGroup();
   }
-  const nums=parseNums(t),cnt=g.keys.length,mx=g.max||3;
+  const nums=parseNums(t,true),cnt=g.keys.length,mx=g.max||3;
   // If no numbers found, store as note and prompt again
   if(!nums.length){
     if(t.length>2)data.notes+=(data.notes?'\n':'')+t;
@@ -560,6 +579,7 @@ function handleGroup(t){
 function closeAssessment(){
   state='IDLE';
   scaleLegend.classList.add('hidden');
+  progressWrap.classList.add('hidden');
   saveClient();
   setTimeout(()=>showActions(),300);
   return `تمام شد! 🎉\n\nخیلی ممنون ${data.first} جان که وقت گذاشتید و با دقت جواب دادید.\n\n📋 پاسخ‌های شما ثبت شد\n👨‍⚕️ دکتر فتاحی بررسی می‌کنن\n📞 نتایج و برنامه درمان بهتون اطلاع داده می‌شه\n\nاگه سوالی دارید بپرسید. مراقب خودتون باشید 💚`;
@@ -687,7 +707,7 @@ function downloadText(filename,text){
 
 // ─── UI ─────────────────────────────────────────────────
 const $=id=>document.getElementById(id);
-const msgBox=$('messages'), inputField=$('inputField'), welcomeEl=$('welcome'), inputBar=$('inputBar'), resetBtn=$('resetBtn'), actionsBar=$('actionsBar'), scaleLegend=$('scaleLegend');
+const msgBox=$('messages'), inputField=$('inputField'), welcomeEl=$('welcome'), inputBar=$('inputBar'), resetBtn=$('resetBtn'), actionsBar=$('actionsBar'), scaleLegend=$('scaleLegend'), progressWrap=$('progressWrap'), progressFill=$('progressFill');
 
 function addMsg(role,text,withDownload){
   const div=document.createElement('div');
@@ -783,10 +803,12 @@ function startChat(){
 }
 
 function resetChat(){
+  if(state&&state!=='IDLE'&&!confirm('آیا مطمئنید؟ اطلاعات ذخیره نشده از بین می‌رود.'))return;
   msgBox.innerHTML='';
   msgBox.classList.add('hidden');
   inputBar.classList.add('hidden');
   scaleLegend.classList.add('hidden');
+  progressWrap.classList.add('hidden');
   hideActions();
   resetBtn.classList.remove('show');
   welcomeEl.classList.remove('hidden');
@@ -794,23 +816,38 @@ function resetChat(){
   updateRecordsBtn();
 }
 
+function showTyping(){
+  const div=document.createElement('div');div.className='msg assistant';div.id='typingMsg';
+  const bubble=document.createElement('div');bubble.className='bubble assistant';
+  bubble.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  div.appendChild(bubble);msgBox.appendChild(div);
+  msgBox.scrollTop=msgBox.scrollHeight;
+}
+function removeTyping(){const el=$('typingMsg');if(el)el.remove();}
+
 function handleSend(e){
   e.preventDefault();
   const t=inputField.value.trim();
   if(!t)return;
   addMsg('user',t);
-  inputField.value='';
+  inputField.value='';inputField.style.height='auto';
+  showTyping();
   setTimeout(()=>{
+    removeTyping();
     const resp=process(t);
     const isReport=resp.includes('═══');
     addMsg('assistant',resp,isReport);
     if(state==='IDLE'){showActions();saveClient();}
     inputField.focus();
-  },250);
+  },450);
 }
 
 inputField.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend(e);}
+});
+inputField.addEventListener('input',()=>{
+  inputField.style.height='auto';
+  inputField.style.height=Math.min(inputField.scrollHeight,120)+'px';
 });
 
 // Init — check for existing records
