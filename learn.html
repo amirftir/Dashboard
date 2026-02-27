@@ -1,0 +1,1386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Lab — Interactive Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: #161618;
+            --bg-hover: #1c1c1f;
+            --border: #2a2a2e;
+            --border-light: #3a3a3f;
+            --text-primary: #e8e8e8;
+            --text-secondary: #888;
+            --text-muted: #555;
+            --accent-gold: #d4a853;
+            --accent-gold-dim: #a68a3a;
+            --accent-green: #4ade80;
+            --accent-green-dim: #22c55e;
+            --accent-yellow: #facc15;
+            --accent-red: #f87171;
+            --accent-blue: #60a5fa;
+            --accent-purple: #a78bfa;
+            --gradient-gold: linear-gradient(135deg, #d4a853 0%, #b8943a 100%);
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            --shadow-glow: 0 0 40px rgba(212, 168, 83, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        body::before {
+            content: '';
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 1000;
+        }
+        .container { max-width: 1400px; margin: 0 auto; padding: 40px 24px; }
+
+        /* Header */
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border);
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-left h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+        .header-left .subtitle { color: var(--text-secondary); font-size: 14px; font-family: 'IBM Plex Mono', monospace; }
+        .back-link {
+            color: var(--text-muted); text-decoration: none; font-size: 13px;
+            font-family: 'IBM Plex Mono', monospace; transition: color 0.2s;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .back-link:hover { color: var(--accent-gold); }
+        .header-right { display: flex; gap: 16px; align-items: center; }
+        .stat-block { text-align: right; }
+        .stat-block .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 2px; }
+        .stat-block .value { font-size: 20px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+        .stat-block .value.gold { color: var(--accent-gold); }
+
+        /* Views */
+        .view { display: none; }
+        .view.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* URL Input View */
+        .url-input-view { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; }
+        .drop-zone {
+            width: 100%; max-width: 700px; border: 2px dashed var(--border-light);
+            border-radius: 16px; padding: 60px 40px; text-align: center;
+            transition: all 0.3s ease; cursor: pointer; background: var(--bg-card);
+        }
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: var(--accent-gold); background: var(--bg-hover);
+            box-shadow: var(--shadow-glow);
+        }
+        .drop-zone-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.8; }
+        .drop-zone h2 { font-size: 22px; font-weight: 500; margin-bottom: 8px; }
+        .drop-zone p { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+        .url-input-wrapper { display: flex; gap: 12px; width: 100%; max-width: 560px; margin: 0 auto; }
+        .url-input {
+            flex: 1; background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px 18px; color: var(--text-primary);
+            font-size: 15px; font-family: 'IBM Plex Mono', monospace; outline: none;
+            transition: border-color 0.2s;
+        }
+        .url-input:focus { border-color: var(--accent-gold); }
+        .url-input::placeholder { color: var(--text-muted); }
+        .btn-primary {
+            background: var(--gradient-gold); border: none; color: var(--bg-primary);
+            padding: 14px 28px; border-radius: 10px; font-weight: 600; font-size: 15px;
+            cursor: pointer; transition: opacity 0.2s; font-family: 'Outfit', sans-serif;
+            white-space: nowrap;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            color: var(--text-secondary); padding: 10px 20px; border-radius: 8px;
+            font-size: 13px; cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif;
+        }
+        .btn-secondary:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn-small {
+            background: none; border: 1px solid var(--border); color: var(--text-secondary);
+            padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;
+            transition: all 0.15s; font-family: 'Outfit', sans-serif;
+        }
+        .btn-small:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn-small.active { border-color: var(--accent-gold); color: var(--accent-gold); background: rgba(212,168,83,0.1); }
+        .btn-danger { border-color: var(--accent-red); color: var(--accent-red); }
+        .btn-danger:hover { background: rgba(248,113,113,0.1); }
+        .or-divider { color: var(--text-muted); font-size: 13px; margin: 20px 0; text-transform: uppercase; letter-spacing: 1px; }
+        .paste-toggle { color: var(--accent-gold); cursor: pointer; font-size: 14px; text-decoration: underline; }
+        .paste-area {
+            width: 100%; max-width: 560px; margin-top: 16px; display: none;
+        }
+        .paste-area.active { display: block; }
+        .paste-area textarea {
+            width: 100%; height: 200px; background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px; color: var(--text-primary); font-size: 14px;
+            font-family: 'Outfit', sans-serif; resize: vertical; outline: none; line-height: 1.7;
+        }
+        .paste-area textarea:focus { border-color: var(--accent-gold); }
+        .paste-area .btn-primary { margin-top: 12px; width: 100%; }
+
+        /* Workspace View */
+        .workspace { display: none; }
+        .workspace.active { display: block; }
+        .workspace-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+        }
+        .session-title { font-size: 20px; font-weight: 600; flex: 1; min-width: 200px; }
+        .session-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-muted); }
+        .progress-bar-container { width: 100%; margin-bottom: 24px; }
+        .progress-phases {
+            display: flex; gap: 4px; margin-bottom: 8px;
+        }
+        .phase-dot {
+            flex: 1; height: 6px; border-radius: 3px; background: var(--border);
+            transition: background 0.3s;
+        }
+        .phase-dot.completed { background: var(--accent-green); }
+        .phase-dot.current { background: var(--accent-gold); }
+        .progress-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex; gap: 4px; margin-bottom: 24px; flex-wrap: wrap;
+            border-bottom: 1px solid var(--border); padding-bottom: 0;
+        }
+        .tab {
+            padding: 10px 18px; font-size: 13px; color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s; border: none; background: none;
+            font-family: 'Outfit', sans-serif; border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+        .tab:hover { color: var(--text-secondary); }
+        .tab.active { color: var(--accent-gold); border-bottom-color: var(--accent-gold); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* Absorb Tab */
+        .video-container {
+            position: relative; width: 100%; padding-bottom: 56.25%; height: 0;
+            border-radius: 12px; overflow: hidden; background: var(--bg-secondary);
+            border: 1px solid var(--border); margin-bottom: 20px;
+        }
+        .video-container iframe {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .article-content {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 32px; max-height: 600px; overflow-y: auto; font-size: 15px;
+            line-height: 1.8; margin-bottom: 20px;
+        }
+        .article-content::-webkit-scrollbar { width: 6px; }
+        .article-content::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        .article-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+        .timestamp-notes { margin-top: 16px; }
+        .timestamp-input-row { display: flex; gap: 12px; margin-bottom: 12px; }
+        .timestamp-input-row input {
+            background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px; color: var(--text-primary);
+            font-size: 14px; outline: none; font-family: 'IBM Plex Mono', monospace;
+        }
+        .timestamp-input-row input:first-child { width: 100px; }
+        .timestamp-input-row input:last-child { flex: 1; font-family: 'Outfit', sans-serif; }
+        .timestamp-list { display: flex; flex-direction: column; gap: 8px; }
+        .timestamp-item {
+            display: flex; gap: 12px; align-items: flex-start; padding: 10px 14px;
+            background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border);
+        }
+        .timestamp-item .time {
+            font-family: 'IBM Plex Mono', monospace; font-size: 13px;
+            color: var(--accent-gold); cursor: pointer; white-space: nowrap; min-width: 60px;
+        }
+        .timestamp-item .note { font-size: 14px; color: var(--text-secondary); flex: 1; }
+        .timestamp-item .delete-ts { 
+            color: var(--text-muted); cursor: pointer; font-size: 16px; 
+            background: none; border: none; padding: 0 4px;
+        }
+        .timestamp-item .delete-ts:hover { color: var(--accent-red); }
+
+        /* Cornell Notes Tab */
+        .cornell-container {
+            display: grid; grid-template-columns: 250px 1fr; grid-template-rows: 1fr auto;
+            gap: 1px; background: var(--border); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden; min-height: 500px;
+        }
+        .cornell-cues {
+            background: var(--bg-card); padding: 20px; grid-row: 1;
+        }
+        .cornell-notes {
+            background: var(--bg-card); padding: 20px; grid-row: 1;
+        }
+        .cornell-summary {
+            background: var(--bg-card); padding: 20px; grid-column: 1 / -1;
+        }
+        .cornell-label {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); margin-bottom: 12px; font-weight: 500;
+        }
+        .cornell-textarea {
+            width: 100%; height: 100%; min-height: 200px; background: transparent;
+            border: none; color: var(--text-primary); font-size: 14px;
+            font-family: 'Outfit', sans-serif; resize: none; outline: none; line-height: 1.7;
+        }
+        .cornell-summary .cornell-textarea { min-height: 80px; }
+
+        /* Flashcards Tab */
+        .flashcard-creator { margin-bottom: 24px; }
+        .flashcard-creator-row {
+            display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; margin-bottom: 12px;
+        }
+        .flashcard-creator-row input {
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;
+            padding: 12px 16px; color: var(--text-primary); font-size: 14px; outline: none;
+            font-family: 'Outfit', sans-serif;
+        }
+        .flashcard-creator-row input:focus { border-color: var(--accent-gold); }
+        .flashcard-deck { display: flex; flex-direction: column; gap: 16px; }
+        .flashcard-review { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .flashcard-wrapper { perspective: 1000px; width: 100%; max-width: 500px; height: 280px; cursor: pointer; }
+        .flashcard {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d; transition: transform 0.6s ease;
+        }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 32px; text-align: center;
+        }
+        .flashcard-back { transform: rotateY(180deg); }
+        .flashcard-face .face-label {
+            position: absolute; top: 16px; left: 20px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+        }
+        .flashcard-face .face-text { font-size: 20px; font-weight: 500; line-height: 1.5; }
+        .flashcard-controls { display: flex; gap: 12px; align-items: center; }
+        .flashcard-counter { font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--text-muted); }
+        .sr-buttons { display: flex; gap: 8px; margin-top: 8px; }
+        .sr-btn {
+            padding: 8px 20px; border-radius: 8px; font-size: 13px;
+            cursor: pointer; border: 1px solid; font-family: 'Outfit', sans-serif;
+            transition: all 0.15s; background: none;
+        }
+        .sr-btn.again { border-color: var(--accent-red); color: var(--accent-red); }
+        .sr-btn.again:hover { background: rgba(248,113,113,0.1); }
+        .sr-btn.hard { border-color: var(--accent-yellow); color: var(--accent-yellow); }
+        .sr-btn.hard:hover { background: rgba(250,204,21,0.1); }
+        .sr-btn.good { border-color: var(--accent-green); color: var(--accent-green); }
+        .sr-btn.good:hover { background: rgba(74,222,128,0.1); }
+        .sr-btn.easy { border-color: var(--accent-blue); color: var(--accent-blue); }
+        .sr-btn.easy:hover { background: rgba(96,165,250,0.1); }
+        .flashcard-list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px; background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .flashcard-list-item .fc-front { font-size: 14px; font-weight: 500; }
+        .flashcard-list-item .fc-back { font-size: 13px; color: var(--text-secondary); }
+        .flashcard-list-item .fc-meta { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+        /* Quiz Tab */
+        .quiz-creator { margin-bottom: 24px; }
+        .quiz-creator-row {
+            display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;
+        }
+        .quiz-creator-row input, .quiz-creator-row textarea {
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;
+            padding: 12px 16px; color: var(--text-primary); font-size: 14px; outline: none;
+            font-family: 'Outfit', sans-serif;
+        }
+        .quiz-creator-row textarea { min-height: 60px; resize: vertical; }
+        .quiz-creator-row input:focus, .quiz-creator-row textarea:focus { border-color: var(--accent-gold); }
+        .quiz-item {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px; margin-bottom: 16px;
+        }
+        .quiz-question { font-size: 16px; font-weight: 500; margin-bottom: 12px; }
+        .quiz-answer {
+            padding: 14px 18px; background: var(--bg-secondary); border-radius: 8px;
+            font-size: 14px; color: var(--text-secondary); line-height: 1.6;
+            border: 1px solid var(--border); display: none;
+        }
+        .quiz-answer.revealed { display: block; animation: fadeIn 0.3s ease; }
+        .quiz-item-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .quiz-number {
+            font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+            color: var(--text-muted); margin-bottom: 6px;
+        }
+
+        /* Feynman Tab */
+        .feynman-prompt {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 24px; margin-bottom: 20px;
+        }
+        .feynman-prompt h3 { font-size: 16px; margin-bottom: 8px; color: var(--accent-gold); }
+        .feynman-prompt p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .feynman-textarea {
+            width: 100%; min-height: 300px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 12px; padding: 24px;
+            color: var(--text-primary); font-size: 15px; font-family: 'Outfit', sans-serif;
+            line-height: 1.8; outline: none; resize: vertical;
+        }
+        .feynman-textarea:focus { border-color: var(--accent-gold); }
+        .understanding-rating { margin-top: 20px; display: flex; align-items: center; gap: 16px; }
+        .understanding-rating .rating-label { font-size: 13px; color: var(--text-muted); }
+        .rating-buttons { display: flex; gap: 8px; }
+        .rating-btn {
+            width: 40px; height: 40px; border-radius: 8px; border: 2px solid var(--border);
+            background: var(--bg-secondary); color: var(--text-primary); font-size: 16px;
+            font-weight: 600; cursor: pointer; transition: all 0.15s;
+        }
+        .rating-btn:hover { transform: scale(1.1); }
+        .rating-btn.selected { border-color: var(--accent-gold); background: rgba(212,168,83,0.15); color: var(--accent-gold); }
+
+        /* Key Concepts Tab */
+        .concept-creator { margin-bottom: 24px; }
+        .concept-creator-row {
+            display: grid; grid-template-columns: 200px 1fr auto; gap: 12px; margin-bottom: 12px;
+        }
+        .concept-creator-row input {
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;
+            padding: 12px 16px; color: var(--text-primary); font-size: 14px; outline: none;
+            font-family: 'Outfit', sans-serif;
+        }
+        .concept-creator-row input:focus { border-color: var(--accent-gold); }
+        .concept-list { display: flex; flex-direction: column; gap: 12px; }
+        .concept-item {
+            display: grid; grid-template-columns: 200px 1fr auto; gap: 16px; align-items: start;
+            padding: 16px 20px; background: var(--bg-secondary); border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .concept-term { font-weight: 600; font-size: 15px; color: var(--accent-gold); }
+        .concept-def { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+        /* Timer */
+        .timer-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+            background: var(--bg-card); border-top: 1px solid var(--border);
+            padding: 12px 24px; display: none; align-items: center; justify-content: center; gap: 20px;
+        }
+        .timer-bar.active { display: flex; }
+        .timer-display {
+            font-family: 'IBM Plex Mono', monospace; font-size: 28px;
+            font-weight: 600; color: var(--accent-gold); min-width: 120px; text-align: center;
+        }
+        .timer-display.break-time { color: var(--accent-green); }
+        .timer-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .timer-btn {
+            background: none; border: 1px solid var(--border); color: var(--text-secondary);
+            width: 36px; height: 36px; border-radius: 8px; cursor: pointer;
+            font-size: 16px; transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+        }
+        .timer-btn:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .timer-progress { width: 200px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .timer-progress-fill { height: 100%; background: var(--accent-gold); border-radius: 2px; transition: width 1s linear; }
+        .timer-progress-fill.break-time { background: var(--accent-green); }
+
+        /* Library View */
+        .library-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .library-search {
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px 18px; color: var(--text-primary); font-size: 14px; outline: none;
+            width: 300px; font-family: 'Outfit', sans-serif;
+        }
+        .library-search:focus { border-color: var(--accent-gold); }
+        .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .library-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px; cursor: pointer; transition: all 0.2s;
+        }
+        .library-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+        .library-card .card-type {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); margin-bottom: 8px; font-family: 'IBM Plex Mono', monospace;
+        }
+        .library-card .card-type.video { color: var(--accent-red); }
+        .library-card .card-type.article { color: var(--accent-blue); }
+        .library-card .card-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; line-height: 1.4; }
+        .library-card .card-date { font-size: 12px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; margin-bottom: 12px; }
+        .library-card .card-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .library-card .card-progress-fill { height: 100%; background: var(--gradient-gold); border-radius: 2px; }
+        .library-card .card-stats {
+            display: flex; gap: 16px; margin-top: 10px; font-size: 12px; color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        .empty-library {
+            text-align: center; padding: 80px 20px; color: var(--text-muted);
+        }
+        .empty-library .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-library h3 { font-size: 18px; color: var(--text-secondary); margin-bottom: 8px; }
+
+        /* Nav Tabs for main views */
+        .nav-tabs { display: flex; gap: 8px; }
+        .nav-tab {
+            padding: 8px 16px; border-radius: 8px; font-size: 13px; color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s; border: 1px solid transparent;
+            background: none; font-family: 'Outfit', sans-serif;
+        }
+        .nav-tab:hover { color: var(--text-secondary); }
+        .nav-tab.active { color: var(--accent-gold); border-color: var(--accent-gold); background: rgba(212,168,83,0.08); }
+
+        /* Footer */
+        .footer {
+            margin-top: 48px; padding-top: 24px; padding-bottom: 60px;
+            border-top: 1px solid var(--border); text-align: center;
+            color: var(--text-muted); font-size: 12px;
+        }
+        .footer .persian { font-size: 14px; margin-bottom: 8px; color: var(--text-secondary); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cornell-container { grid-template-columns: 1fr; }
+            .cornell-cues { grid-row: auto; }
+            .flashcard-creator-row { grid-template-columns: 1fr; }
+            .concept-creator-row { grid-template-columns: 1fr; }
+            .concept-item { grid-template-columns: 1fr; }
+            .url-input-wrapper { flex-direction: column; }
+            .header { flex-direction: column; gap: 16px; }
+            .workspace-header { flex-direction: column; }
+            .timer-bar { flex-wrap: wrap; padding: 8px 16px; gap: 12px; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div>
+                    <h1>Learn Lab</h1>
+                    <div class="subtitle">Interactive Learning Platform</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="nav-tabs">
+                    <button class="nav-tab active" data-view="input" id="navNew">+ New</button>
+                    <button class="nav-tab" data-view="library" id="navLibrary">Library</button>
+                </div>
+                <div class="stat-block">
+                    <div class="label">Sessions</div>
+                    <div class="value gold" id="totalSessions">0</div>
+                </div>
+                <a href="dashboard.html" class="back-link">&larr; Command Center</a>
+            </div>
+        </header>
+
+        <!-- URL Input View -->
+        <div class="view active" id="inputView">
+            <div class="url-input-view">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">&#x1f9e0;</div>
+                    <h2>Drop a URL to Start Learning</h2>
+                    <p>Paste a YouTube video or article link to transform it into an interactive learning experience</p>
+                    <div class="url-input-wrapper">
+                        <input type="text" class="url-input" id="urlInput" placeholder="https://youtube.com/watch?v=... or any article URL">
+                        <button class="btn-primary" id="startBtn">Learn</button>
+                    </div>
+                    <div class="or-divider">or paste content directly</div>
+                    <span class="paste-toggle" id="pasteToggle">Paste article text</span>
+                </div>
+                <div class="paste-area" id="pasteArea">
+                    <textarea id="pasteContent" placeholder="Paste article content here..."></textarea>
+                    <input type="text" class="url-input" id="pasteTitleInput" placeholder="Give it a title..." style="width:100%;margin-top:12px;">
+                    <button class="btn-primary" id="pasteStartBtn" style="margin-top:12px;width:100%;">Start Learning</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Library View -->
+        <div class="view" id="libraryView">
+            <div class="library-header">
+                <h2 style="font-size:20px;font-weight:600;">Your Learning Library</h2>
+                <input type="text" class="library-search" id="librarySearch" placeholder="Search sessions...">
+            </div>
+            <div class="library-grid" id="libraryGrid"></div>
+            <div class="empty-library" id="emptyLibrary" style="display:none;">
+                <div class="empty-icon">&#x1f4da;</div>
+                <h3>No sessions yet</h3>
+                <p>Drop a URL to start your first learning session</p>
+            </div>
+        </div>
+
+        <!-- Workspace View -->
+        <div class="view" id="workspaceView">
+            <div class="workspace-header">
+                <div>
+                    <div class="session-meta" id="sessionType">VIDEO</div>
+                    <div class="session-title" id="sessionTitle">Session Title</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button class="btn-small" id="timerToggle">&#x23F1; Focus Timer</button>
+                    <button class="btn-small" id="backToInput">&larr; New Session</button>
+                    <button class="btn-small btn-danger" id="deleteSession">Delete</button>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-phases" id="progressPhases">
+                    <div class="phase-dot" data-phase="absorb"></div>
+                    <div class="phase-dot" data-phase="notes"></div>
+                    <div class="phase-dot" data-phase="flashcards"></div>
+                    <div class="phase-dot" data-phase="quiz"></div>
+                    <div class="phase-dot" data-phase="feynman"></div>
+                    <div class="phase-dot" data-phase="concepts"></div>
+                </div>
+                <div class="progress-label" id="progressLabel">0 / 6 phases completed — 0 XP earned</div>
+            </div>
+
+            <!-- Workspace Tabs -->
+            <div class="tabs" id="workspaceTabs">
+                <button class="tab active" data-tab="absorb">Absorb</button>
+                <button class="tab" data-tab="notes">Cornell Notes</button>
+                <button class="tab" data-tab="flashcards">Flashcards</button>
+                <button class="tab" data-tab="quiz">Active Recall</button>
+                <button class="tab" data-tab="feynman">Feynman</button>
+                <button class="tab" data-tab="concepts">Key Concepts</button>
+            </div>
+
+            <!-- Absorb Tab -->
+            <div class="tab-content active" id="tab-absorb">
+                <div id="contentContainer"></div>
+                <div class="timestamp-notes" id="timestampNotes" style="display:none;">
+                    <h3 style="font-size:15px;font-weight:500;margin-bottom:12px;color:var(--text-secondary);">Timestamped Notes</h3>
+                    <div class="timestamp-input-row">
+                        <input type="text" id="tsTimeInput" placeholder="0:00">
+                        <input type="text" id="tsNoteInput" placeholder="Add a note at this timestamp...">
+                        <button class="btn-small" id="addTimestamp">Add</button>
+                    </div>
+                    <div class="timestamp-list" id="timestampList"></div>
+                </div>
+                <div id="absorbActions" style="margin-top:20px;">
+                    <button class="btn-small" id="markAbsorbed">Mark as absorbed &check;</button>
+                </div>
+            </div>
+
+            <!-- Cornell Notes Tab -->
+            <div class="tab-content" id="tab-notes">
+                <div class="cornell-container">
+                    <div class="cornell-cues">
+                        <div class="cornell-label">Cues / Questions</div>
+                        <textarea class="cornell-textarea" id="cornellCues" placeholder="Write key questions, cue words, or prompts here...&#10;&#10;These help you review later.&#10;&#10;- What is...?&#10;- Why does...?&#10;- How to...?"></textarea>
+                    </div>
+                    <div class="cornell-notes">
+                        <div class="cornell-label">Notes</div>
+                        <textarea class="cornell-textarea" id="cornellNotes" placeholder="Write your detailed notes here...&#10;&#10;Capture main ideas, details, and examples from the content.&#10;&#10;Use your own words — don't copy verbatim."></textarea>
+                    </div>
+                    <div class="cornell-summary">
+                        <div class="cornell-label">Summary (write this after reviewing your notes)</div>
+                        <textarea class="cornell-textarea" id="cornellSummary" placeholder="Summarize the key takeaways in 2-3 sentences. What's the big picture?"></textarea>
+                    </div>
+                </div>
+                <div style="margin-top:16px;">
+                    <button class="btn-small" id="markNotes">Mark notes complete &check;</button>
+                </div>
+            </div>
+
+            <!-- Flashcards Tab -->
+            <div class="tab-content" id="tab-flashcards">
+                <div class="flashcard-creator">
+                    <h3 style="font-size:15px;font-weight:500;margin-bottom:12px;color:var(--text-secondary);">Create Flashcard</h3>
+                    <div class="flashcard-creator-row">
+                        <input type="text" id="fcFront" placeholder="Front — Question or term">
+                        <input type="text" id="fcBack" placeholder="Back — Answer or definition">
+                        <button class="btn-primary" id="addFlashcard" style="padding:12px 20px;">Add</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-bottom:20px;">
+                    <button class="btn-small active" id="fcViewList" data-fcview="list">All Cards</button>
+                    <button class="btn-small" id="fcViewReview" data-fcview="review">Review Mode</button>
+                </div>
+                <div id="flashcardListView">
+                    <div class="flashcard-deck" id="flashcardDeck"></div>
+                </div>
+                <div id="flashcardReviewView" style="display:none;">
+                    <div class="flashcard-review">
+                        <div class="flashcard-counter" id="fcCounter">0 / 0</div>
+                        <div class="flashcard-wrapper" id="flashcardWrapper">
+                            <div class="flashcard" id="flashcardEl">
+                                <div class="flashcard-face flashcard-front">
+                                    <div class="face-label">Front</div>
+                                    <div class="face-text" id="fcFrontText">No cards yet</div>
+                                </div>
+                                <div class="flashcard-face flashcard-back">
+                                    <div class="face-label">Back</div>
+                                    <div class="face-text" id="fcBackText"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-muted);">Click card to flip</p>
+                        <div class="sr-buttons" id="srButtons" style="display:none;">
+                            <button class="sr-btn again" data-quality="0">Again</button>
+                            <button class="sr-btn hard" data-quality="3">Hard</button>
+                            <button class="sr-btn good" data-quality="4">Good</button>
+                            <button class="sr-btn easy" data-quality="5">Easy</button>
+                        </div>
+                        <div class="flashcard-controls">
+                            <button class="btn-small" id="fcPrev">&larr; Prev</button>
+                            <button class="btn-small" id="fcNext">Next &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;">
+                    <button class="btn-small" id="markFlashcards">Mark flashcards complete &check;</button>
+                </div>
+            </div>
+
+            <!-- Quiz Tab -->
+            <div class="tab-content" id="tab-quiz">
+                <div class="quiz-creator">
+                    <h3 style="font-size:15px;font-weight:500;margin-bottom:12px;color:var(--text-secondary);">Create Question</h3>
+                    <div class="quiz-creator-row">
+                        <input type="text" id="quizQuestion" placeholder="Write a question about the content...">
+                        <textarea id="quizAnswer" placeholder="Write the answer..."></textarea>
+                        <button class="btn-primary" id="addQuiz" style="width:100%;">Add Question</button>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;margin-bottom:20px;">
+                    <button class="btn-small" id="revealAllQuiz">Reveal All Answers</button>
+                    <button class="btn-small" id="hideAllQuiz">Hide All Answers</button>
+                </div>
+                <div id="quizList"></div>
+                <div style="margin-top:16px;">
+                    <button class="btn-small" id="markQuiz">Mark quiz complete &check;</button>
+                </div>
+            </div>
+
+            <!-- Feynman Tab -->
+            <div class="tab-content" id="tab-feynman">
+                <div class="feynman-prompt">
+                    <h3>The Feynman Technique</h3>
+                    <p>Explain what you learned as if teaching it to a 12-year-old. Use simple language, analogies, and examples. If you struggle to explain something simply, that's where your understanding gaps are — go back and study those parts.</p>
+                </div>
+                <textarea class="feynman-textarea" id="feynmanText" placeholder="Start your explanation here...&#10;&#10;Pretend you're teaching this to someone who has never heard of this topic.&#10;&#10;Use simple words. Use examples. Use analogies.&#10;&#10;If you get stuck, that's where you need to study more."></textarea>
+                <div class="understanding-rating">
+                    <span class="rating-label">Rate your understanding:</span>
+                    <div class="rating-buttons" id="ratingButtons">
+                        <button class="rating-btn" data-rating="1">1</button>
+                        <button class="rating-btn" data-rating="2">2</button>
+                        <button class="rating-btn" data-rating="3">3</button>
+                        <button class="rating-btn" data-rating="4">4</button>
+                        <button class="rating-btn" data-rating="5">5</button>
+                    </div>
+                    <span class="rating-label" id="ratingDesc"></span>
+                </div>
+                <div style="margin-top:16px;">
+                    <button class="btn-small" id="markFeynman">Mark Feynman complete &check;</button>
+                </div>
+            </div>
+
+            <!-- Key Concepts Tab -->
+            <div class="tab-content" id="tab-concepts">
+                <div class="concept-creator">
+                    <h3 style="font-size:15px;font-weight:500;margin-bottom:12px;color:var(--text-secondary);">Add Key Concept</h3>
+                    <div class="concept-creator-row">
+                        <input type="text" id="conceptTerm" placeholder="Term / Concept">
+                        <input type="text" id="conceptDef" placeholder="Definition / Explanation">
+                        <button class="btn-primary" id="addConcept" style="padding:12px 20px;">Add</button>
+                    </div>
+                </div>
+                <div class="concept-list" id="conceptList"></div>
+                <div style="margin-top:16px;">
+                    <button class="btn-small" id="markConcepts">Mark concepts complete &check;</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="persian">&#x0628;&#x0650;&#x0633;&#x0652;&#x0645;&#x0650; &#x0627;&#x0644;&#x0644;&#x0651;&#x064E;&#x0647;&#x0650; &#x0627;&#x0644;&#x0631;&#x0651;&#x064E;&#x062D;&#x0652;&#x0645;&#x064E;&#x0670;&#x0646;&#x0650; &#x0627;&#x0644;&#x0631;&#x0651;&#x064E;&#x062D;&#x0650;&#x064A;&#x0645;&#x0650;</div>
+            <div>Learn Lab v1.0 — Built for deep understanding</div>
+        </footer>
+    </div>
+
+    <!-- Focus Timer Bar -->
+    <div class="timer-bar" id="timerBar">
+        <div class="timer-label" id="timerLabel">Focus Time</div>
+        <div class="timer-progress"><div class="timer-progress-fill" id="timerProgressFill"></div></div>
+        <div class="timer-display" id="timerDisplay">25:00</div>
+        <button class="timer-btn" id="timerStart" title="Start">&#x25B6;</button>
+        <button class="timer-btn" id="timerPause" title="Pause" style="display:none;">&#x23F8;</button>
+        <button class="timer-btn" id="timerReset" title="Reset">&#x21BA;</button>
+        <button class="timer-btn" id="timerClose" title="Close">&times;</button>
+    </div>
+
+    <script>
+    // ============================
+    // STATE & DATA
+    // ============================
+    const STORAGE_KEY = 'learnLabData';
+    const PHASES = ['absorb', 'notes', 'flashcards', 'quiz', 'feynman', 'concepts'];
+    const PHASE_XP = { absorb: 5, notes: 10, flashcards: 15, quiz: 15, feynman: 20, concepts: 10 };
+    const RATING_DESCRIPTIONS = {
+        1: 'Very confused — need to re-study',
+        2: 'Shaky — gaps in understanding',
+        3: 'Okay — know the basics',
+        4: 'Good — can explain most of it',
+        5: 'Solid — could teach this topic'
+    };
+
+    let state = { sessions: [], currentSessionId: null };
+    let timerState = { running: false, seconds: 25 * 60, isBreak: false, interval: null };
+    let reviewIndex = 0;
+
+    function loadState() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) state = JSON.parse(saved);
+        } catch(e) { console.error('Load error:', e); }
+    }
+
+    function saveState() {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) { console.error('Save error:', e); }
+    }
+
+    function currentSession() {
+        return state.sessions.find(s => s.id === state.currentSessionId);
+    }
+
+    function generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // ============================
+    // URL PROCESSING
+    // ============================
+    function parseYouTubeId(url) {
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&#?\s]+)/,
+            /youtube\.com\/shorts\/([^&#?\s]+)/
+        ];
+        for (const p of patterns) {
+            const m = url.match(p);
+            if (m) return m[1];
+        }
+        return null;
+    }
+
+    function isYouTubeUrl(url) {
+        return /(?:youtube\.com|youtu\.be)/.test(url);
+    }
+
+    function createSession(url, type, title, content) {
+        const session = {
+            id: generateId(),
+            url: url || '',
+            type: type,
+            title: title || 'Untitled Session',
+            content: content || '',
+            videoId: type === 'video' ? parseYouTubeId(url) : null,
+            dateCreated: new Date().toISOString(),
+            completedPhases: [],
+            xpEarned: 0,
+            timestamps: [],
+            cornell: { cues: '', notes: '', summary: '' },
+            flashcards: [],
+            quiz: [],
+            feynman: { text: '', rating: 0 },
+            concepts: []
+        };
+        state.sessions.unshift(session);
+        state.currentSessionId = session.id;
+        saveState();
+        return session;
+    }
+
+    // ============================
+    // VIEW MANAGEMENT
+    // ============================
+    function showView(viewName) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+        if (viewName === 'input') {
+            document.getElementById('inputView').classList.add('active');
+            document.getElementById('navNew').classList.add('active');
+        } else if (viewName === 'library') {
+            document.getElementById('libraryView').classList.add('active');
+            document.getElementById('navLibrary').classList.add('active');
+            renderLibrary();
+        } else if (viewName === 'workspace') {
+            document.getElementById('workspaceView').classList.add('active');
+            renderWorkspace();
+        }
+        updateStats();
+    }
+
+    // ============================
+    // WORKSPACE RENDERING
+    // ============================
+    function renderWorkspace() {
+        const s = currentSession();
+        if (!s) return showView('input');
+
+        document.getElementById('sessionTitle').textContent = s.title;
+        document.getElementById('sessionType').textContent = s.type === 'video' ? 'VIDEO' : 'ARTICLE';
+        document.getElementById('sessionType').className = 'session-meta';
+
+        // Content
+        const container = document.getElementById('contentContainer');
+        if (s.type === 'video' && s.videoId) {
+            container.innerHTML = '<div class="video-container"><iframe src="https://www.youtube.com/embed/' + s.videoId + '?rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+            document.getElementById('timestampNotes').style.display = 'block';
+        } else {
+            container.innerHTML = '<div class="article-content">' + escapeHtml(s.content || 'No content available. Go back and paste the article text.').replace(/\n/g, '<br>') + '</div>';
+            document.getElementById('timestampNotes').style.display = 'none';
+        }
+
+        // Load saved data into fields
+        document.getElementById('cornellCues').value = s.cornell.cues;
+        document.getElementById('cornellNotes').value = s.cornell.notes;
+        document.getElementById('cornellSummary').value = s.cornell.summary;
+        document.getElementById('feynmanText').value = s.feynman.text;
+
+        // Rating
+        document.querySelectorAll('.rating-btn').forEach(b => {
+            b.classList.toggle('selected', parseInt(b.dataset.rating) === s.feynman.rating);
+        });
+        document.getElementById('ratingDesc').textContent = RATING_DESCRIPTIONS[s.feynman.rating] || '';
+
+        renderTimestamps();
+        renderFlashcardList();
+        renderQuizList();
+        renderConceptList();
+        updateProgress();
+    }
+
+    function updateProgress() {
+        const s = currentSession();
+        if (!s) return;
+        const dots = document.querySelectorAll('.phase-dot');
+        let completedCount = 0;
+        dots.forEach(dot => {
+            const phase = dot.dataset.phase;
+            if (s.completedPhases.includes(phase)) {
+                dot.className = 'phase-dot completed';
+                completedCount++;
+            } else {
+                dot.className = 'phase-dot';
+            }
+        });
+        const xp = s.completedPhases.reduce((sum, p) => sum + (PHASE_XP[p] || 0), 0);
+        s.xpEarned = xp;
+        document.getElementById('progressLabel').textContent = completedCount + ' / 6 phases completed — ' + xp + ' XP earned';
+        saveState();
+    }
+
+    function markPhaseComplete(phase) {
+        const s = currentSession();
+        if (!s) return;
+        if (!s.completedPhases.includes(phase)) {
+            s.completedPhases.push(phase);
+            saveState();
+            updateProgress();
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ============================
+    // TIMESTAMPS
+    // ============================
+    function renderTimestamps() {
+        const s = currentSession();
+        if (!s) return;
+        const list = document.getElementById('timestampList');
+        list.innerHTML = s.timestamps.map((ts, i) =>
+            '<div class="timestamp-item"><span class="time">' + escapeHtml(ts.time) + '</span><span class="note">' + escapeHtml(ts.note) + '</span><button class="delete-ts" data-idx="' + i + '">&times;</button></div>'
+        ).join('');
+        list.querySelectorAll('.delete-ts').forEach(btn => {
+            btn.addEventListener('click', () => {
+                s.timestamps.splice(parseInt(btn.dataset.idx), 1);
+                saveState();
+                renderTimestamps();
+            });
+        });
+    }
+
+    // ============================
+    // FLASHCARDS
+    // ============================
+    function renderFlashcardList() {
+        const s = currentSession();
+        if (!s) return;
+        const deck = document.getElementById('flashcardDeck');
+        if (s.flashcards.length === 0) {
+            deck.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">No flashcards yet. Create some above.</p>';
+            return;
+        }
+        deck.innerHTML = s.flashcards.map((fc, i) =>
+            '<div class="flashcard-list-item"><div><div class="fc-front">' + escapeHtml(fc.front) + '</div><div class="fc-back">' + escapeHtml(fc.back) + '</div></div><div style="display:flex;gap:8px;align-items:center;"><div class="fc-meta">interval: ' + (fc.interval || 1) + 'd</div><button class="btn-small btn-danger" data-idx="' + i + '" style="padding:4px 10px;">&#x2715;</button></div></div>'
+        ).join('');
+        deck.querySelectorAll('.btn-danger').forEach(btn => {
+            btn.addEventListener('click', () => {
+                s.flashcards.splice(parseInt(btn.dataset.idx), 1);
+                saveState();
+                renderFlashcardList();
+            });
+        });
+    }
+
+    function showReviewCard() {
+        const s = currentSession();
+        if (!s || s.flashcards.length === 0) return;
+        if (reviewIndex >= s.flashcards.length) reviewIndex = 0;
+        if (reviewIndex < 0) reviewIndex = s.flashcards.length - 1;
+        const fc = s.flashcards[reviewIndex];
+        document.getElementById('fcFrontText').textContent = fc.front;
+        document.getElementById('fcBackText').textContent = fc.back;
+        document.getElementById('fcCounter').textContent = (reviewIndex + 1) + ' / ' + s.flashcards.length;
+        document.getElementById('flashcardEl').classList.remove('flipped');
+        document.getElementById('srButtons').style.display = 'none';
+    }
+
+    // SM-2 Spaced Repetition
+    function processSR(quality) {
+        const s = currentSession();
+        if (!s || s.flashcards.length === 0) return;
+        const fc = s.flashcards[reviewIndex];
+        fc.repetitions = fc.repetitions || 0;
+        fc.easeFactor = fc.easeFactor || 2.5;
+        fc.interval = fc.interval || 1;
+
+        if (quality < 3) {
+            fc.repetitions = 0;
+            fc.interval = 1;
+        } else {
+            if (fc.repetitions === 0) fc.interval = 1;
+            else if (fc.repetitions === 1) fc.interval = 6;
+            else fc.interval = Math.round(fc.interval * fc.easeFactor);
+            fc.repetitions++;
+        }
+        fc.easeFactor = Math.max(1.3, fc.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+        fc.nextReview = new Date(Date.now() + fc.interval * 86400000).toISOString();
+        saveState();
+        reviewIndex++;
+        if (reviewIndex >= s.flashcards.length) reviewIndex = 0;
+        showReviewCard();
+        renderFlashcardList();
+    }
+
+    // ============================
+    // QUIZ
+    // ============================
+    function renderQuizList() {
+        const s = currentSession();
+        if (!s) return;
+        const list = document.getElementById('quizList');
+        if (s.quiz.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">No questions yet. Create some above.</p>';
+            return;
+        }
+        list.innerHTML = s.quiz.map((q, i) =>
+            '<div class="quiz-item"><div class="quiz-number">Q' + (i + 1) + '</div><div class="quiz-question">' + escapeHtml(q.question) + '</div><div class="quiz-answer" id="qa-' + i + '">' + escapeHtml(q.answer) + '</div><div class="quiz-item-actions"><button class="btn-small reveal-btn" data-idx="' + i + '">Show Answer</button><button class="btn-small btn-danger" data-delidx="' + i + '" style="padding:6px 10px;">&#x2715;</button></div></div>'
+        ).join('');
+        list.querySelectorAll('.reveal-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const el = document.getElementById('qa-' + btn.dataset.idx);
+                el.classList.toggle('revealed');
+                btn.textContent = el.classList.contains('revealed') ? 'Hide Answer' : 'Show Answer';
+            });
+        });
+        list.querySelectorAll('[data-delidx]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                s.quiz.splice(parseInt(btn.dataset.delidx), 1);
+                saveState();
+                renderQuizList();
+            });
+        });
+    }
+
+    // ============================
+    // CONCEPTS
+    // ============================
+    function renderConceptList() {
+        const s = currentSession();
+        if (!s) return;
+        const list = document.getElementById('conceptList');
+        if (s.concepts.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px;">No concepts yet. Add some above.</p>';
+            return;
+        }
+        list.innerHTML = s.concepts.map((c, i) =>
+            '<div class="concept-item"><div class="concept-term">' + escapeHtml(c.term) + '</div><div class="concept-def">' + escapeHtml(c.definition) + '</div><button class="btn-small btn-danger" data-idx="' + i + '" style="padding:4px 10px;">&#x2715;</button></div>'
+        ).join('');
+        list.querySelectorAll('.btn-danger').forEach(btn => {
+            btn.addEventListener('click', () => {
+                s.concepts.splice(parseInt(btn.dataset.idx), 1);
+                saveState();
+                renderConceptList();
+            });
+        });
+    }
+
+    // ============================
+    // LIBRARY
+    // ============================
+    function renderLibrary(filter) {
+        const grid = document.getElementById('libraryGrid');
+        const empty = document.getElementById('emptyLibrary');
+        let sessions = state.sessions;
+        if (filter) {
+            const f = filter.toLowerCase();
+            sessions = sessions.filter(s => s.title.toLowerCase().includes(f));
+        }
+        if (sessions.length === 0) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+        empty.style.display = 'none';
+        grid.innerHTML = sessions.map(s => {
+            const progress = Math.round((s.completedPhases.length / 6) * 100);
+            const date = new Date(s.dateCreated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return '<div class="library-card" data-sid="' + s.id + '"><div class="card-type ' + s.type + '">' + (s.type === 'video' ? 'VIDEO' : 'ARTICLE') + '</div><div class="card-title">' + escapeHtml(s.title) + '</div><div class="card-date">' + date + '</div><div class="card-progress-bar"><div class="card-progress-fill" style="width:' + progress + '%"></div></div><div class="card-stats"><span>' + s.completedPhases.length + '/6 phases</span><span>' + s.xpEarned + ' XP</span><span>' + (s.flashcards ? s.flashcards.length : 0) + ' cards</span></div></div>';
+        }).join('');
+        grid.querySelectorAll('.library-card').forEach(card => {
+            card.addEventListener('click', () => {
+                state.currentSessionId = card.dataset.sid;
+                saveState();
+                showView('workspace');
+            });
+        });
+    }
+
+    function updateStats() {
+        document.getElementById('totalSessions').textContent = state.sessions.length;
+    }
+
+    // ============================
+    // FOCUS TIMER
+    // ============================
+    function updateTimerDisplay() {
+        const mins = Math.floor(timerState.seconds / 60);
+        const secs = timerState.seconds % 60;
+        const display = document.getElementById('timerDisplay');
+        display.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+        display.className = 'timer-display' + (timerState.isBreak ? ' break-time' : '');
+
+        const total = timerState.isBreak ? 5 * 60 : 25 * 60;
+        const pct = ((total - timerState.seconds) / total) * 100;
+        const fill = document.getElementById('timerProgressFill');
+        fill.style.width = pct + '%';
+        fill.className = 'timer-progress-fill' + (timerState.isBreak ? ' break-time' : '');
+
+        document.getElementById('timerLabel').textContent = timerState.isBreak ? 'Break Time' : 'Focus Time';
+    }
+
+    function startTimer() {
+        if (timerState.running) return;
+        timerState.running = true;
+        document.getElementById('timerStart').style.display = 'none';
+        document.getElementById('timerPause').style.display = 'flex';
+        timerState.interval = setInterval(() => {
+            timerState.seconds--;
+            if (timerState.seconds <= 0) {
+                clearInterval(timerState.interval);
+                timerState.running = false;
+                if (timerState.isBreak) {
+                    timerState.isBreak = false;
+                    timerState.seconds = 25 * 60;
+                } else {
+                    timerState.isBreak = true;
+                    timerState.seconds = 5 * 60;
+                }
+                document.getElementById('timerStart').style.display = 'flex';
+                document.getElementById('timerPause').style.display = 'none';
+                try { new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdW+Bh4WDe3d7goeFhIF7eX2Ag4WEgHx6fIGDhYSAfHp8gIOFhIB8enyBg4WEgHx6fYGDhYOAfHt9gYOFg4B8e36Bg4WDgHx7fYGDhYOAfHt9gYOFg4B8e32Bg4WDgHx7fYGDhYOAfHt9gYSFg4B8e32Bg4WDgHx7fYGDhYOAfHt9gYOFg4B8e32Bg4WDf3x7fYGDhYOAfHt9gYOFg4B8e32Bg4WDf3x8fYGDhYOAfHt9gYOFg4B8e32Bg4WDgHx7fYGDhYOAfHt9gYOFg4B8fH2Bg4WDgHx7fYGDhYOAfHt9').play(); } catch(e) {}
+            }
+            updateTimerDisplay();
+        }, 1000);
+    }
+
+    function pauseTimer() {
+        clearInterval(timerState.interval);
+        timerState.running = false;
+        document.getElementById('timerStart').style.display = 'flex';
+        document.getElementById('timerPause').style.display = 'none';
+    }
+
+    function resetTimer() {
+        pauseTimer();
+        timerState.isBreak = false;
+        timerState.seconds = 25 * 60;
+        updateTimerDisplay();
+    }
+
+    // ============================
+    // AUTO-SAVE
+    // ============================
+    function setupAutoSave() {
+        const fields = [
+            { id: 'cornellCues', path: 'cornell.cues' },
+            { id: 'cornellNotes', path: 'cornell.notes' },
+            { id: 'cornellSummary', path: 'cornell.summary' },
+            { id: 'feynmanText', path: 'feynman.text' }
+        ];
+        fields.forEach(({ id, path }) => {
+            document.getElementById(id).addEventListener('input', () => {
+                const s = currentSession();
+                if (!s) return;
+                const parts = path.split('.');
+                if (parts.length === 2) s[parts[0]][parts[1]] = document.getElementById(id).value;
+                else s[parts[0]] = document.getElementById(id).value;
+                saveState();
+            });
+        });
+    }
+
+    // ============================
+    // EVENT LISTENERS
+    // ============================
+    function init() {
+        loadState();
+
+        // Nav tabs
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => showView(tab.dataset.view));
+        });
+
+        // URL submission
+        document.getElementById('startBtn').addEventListener('click', submitUrl);
+        document.getElementById('urlInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitUrl();
+        });
+
+        // Paste content
+        document.getElementById('pasteToggle').addEventListener('click', () => {
+            document.getElementById('pasteArea').classList.toggle('active');
+        });
+        document.getElementById('pasteStartBtn').addEventListener('click', () => {
+            const content = document.getElementById('pasteContent').value.trim();
+            const title = document.getElementById('pasteTitleInput').value.trim() || 'Pasted Content';
+            if (!content) return;
+            createSession('', 'article', title, content);
+            showView('workspace');
+        });
+
+        // Workspace tabs
+        document.querySelectorAll('#workspaceTabs .tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('#workspaceTabs .tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Back to input
+        document.getElementById('backToInput').addEventListener('click', () => showView('input'));
+
+        // Delete session
+        document.getElementById('deleteSession').addEventListener('click', () => {
+            if (!confirm('Delete this learning session? This cannot be undone.')) return;
+            state.sessions = state.sessions.filter(s => s.id !== state.currentSessionId);
+            state.currentSessionId = null;
+            saveState();
+            showView('input');
+        });
+
+        // Timestamps
+        document.getElementById('addTimestamp').addEventListener('click', () => {
+            const s = currentSession();
+            if (!s) return;
+            const time = document.getElementById('tsTimeInput').value.trim();
+            const note = document.getElementById('tsNoteInput').value.trim();
+            if (!note) return;
+            s.timestamps.push({ time: time || '0:00', note });
+            saveState();
+            renderTimestamps();
+            document.getElementById('tsTimeInput').value = '';
+            document.getElementById('tsNoteInput').value = '';
+        });
+
+        // Flashcard creation
+        document.getElementById('addFlashcard').addEventListener('click', () => {
+            const s = currentSession();
+            if (!s) return;
+            const front = document.getElementById('fcFront').value.trim();
+            const back = document.getElementById('fcBack').value.trim();
+            if (!front || !back) return;
+            s.flashcards.push({ front, back, interval: 1, repetitions: 0, easeFactor: 2.5, nextReview: null });
+            saveState();
+            renderFlashcardList();
+            document.getElementById('fcFront').value = '';
+            document.getElementById('fcBack').value = '';
+        });
+
+        // Flashcard views
+        document.getElementById('fcViewList').addEventListener('click', () => {
+            document.getElementById('flashcardListView').style.display = 'block';
+            document.getElementById('flashcardReviewView').style.display = 'none';
+            document.getElementById('fcViewList').classList.add('active');
+            document.getElementById('fcViewReview').classList.remove('active');
+        });
+        document.getElementById('fcViewReview').addEventListener('click', () => {
+            document.getElementById('flashcardListView').style.display = 'none';
+            document.getElementById('flashcardReviewView').style.display = 'block';
+            document.getElementById('fcViewReview').classList.add('active');
+            document.getElementById('fcViewList').classList.remove('active');
+            reviewIndex = 0;
+            showReviewCard();
+        });
+
+        // Flashcard flip
+        document.getElementById('flashcardWrapper').addEventListener('click', () => {
+            document.getElementById('flashcardEl').classList.toggle('flipped');
+            const isFlipped = document.getElementById('flashcardEl').classList.contains('flipped');
+            document.getElementById('srButtons').style.display = isFlipped ? 'flex' : 'none';
+        });
+
+        // Flashcard navigation
+        document.getElementById('fcPrev').addEventListener('click', () => { reviewIndex--; showReviewCard(); });
+        document.getElementById('fcNext').addEventListener('click', () => { reviewIndex++; showReviewCard(); });
+
+        // SR buttons
+        document.querySelectorAll('.sr-btn').forEach(btn => {
+            btn.addEventListener('click', () => processSR(parseInt(btn.dataset.quality)));
+        });
+
+        // Quiz creation
+        document.getElementById('addQuiz').addEventListener('click', () => {
+            const s = currentSession();
+            if (!s) return;
+            const question = document.getElementById('quizQuestion').value.trim();
+            const answer = document.getElementById('quizAnswer').value.trim();
+            if (!question || !answer) return;
+            s.quiz.push({ question, answer });
+            saveState();
+            renderQuizList();
+            document.getElementById('quizQuestion').value = '';
+            document.getElementById('quizAnswer').value = '';
+        });
+
+        // Reveal/Hide all quiz
+        document.getElementById('revealAllQuiz').addEventListener('click', () => {
+            document.querySelectorAll('.quiz-answer').forEach(a => a.classList.add('revealed'));
+            document.querySelectorAll('.reveal-btn').forEach(b => b.textContent = 'Hide Answer');
+        });
+        document.getElementById('hideAllQuiz').addEventListener('click', () => {
+            document.querySelectorAll('.quiz-answer').forEach(a => a.classList.remove('revealed'));
+            document.querySelectorAll('.reveal-btn').forEach(b => b.textContent = 'Show Answer');
+        });
+
+        // Concept creation
+        document.getElementById('addConcept').addEventListener('click', () => {
+            const s = currentSession();
+            if (!s) return;
+            const term = document.getElementById('conceptTerm').value.trim();
+            const definition = document.getElementById('conceptDef').value.trim();
+            if (!term || !definition) return;
+            s.concepts.push({ term, definition });
+            saveState();
+            renderConceptList();
+            document.getElementById('conceptTerm').value = '';
+            document.getElementById('conceptDef').value = '';
+        });
+
+        // Rating buttons
+        document.querySelectorAll('.rating-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const s = currentSession();
+                if (!s) return;
+                const rating = parseInt(btn.dataset.rating);
+                s.feynman.rating = rating;
+                saveState();
+                document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                document.getElementById('ratingDesc').textContent = RATING_DESCRIPTIONS[rating] || '';
+            });
+        });
+
+        // Phase completion buttons
+        document.getElementById('markAbsorbed').addEventListener('click', () => markPhaseComplete('absorb'));
+        document.getElementById('markNotes').addEventListener('click', () => markPhaseComplete('notes'));
+        document.getElementById('markFlashcards').addEventListener('click', () => markPhaseComplete('flashcards'));
+        document.getElementById('markQuiz').addEventListener('click', () => markPhaseComplete('quiz'));
+        document.getElementById('markFeynman').addEventListener('click', () => markPhaseComplete('feynman'));
+        document.getElementById('markConcepts').addEventListener('click', () => markPhaseComplete('concepts'));
+
+        // Timer
+        document.getElementById('timerToggle').addEventListener('click', () => {
+            document.getElementById('timerBar').classList.toggle('active');
+            updateTimerDisplay();
+        });
+        document.getElementById('timerStart').addEventListener('click', startTimer);
+        document.getElementById('timerPause').addEventListener('click', pauseTimer);
+        document.getElementById('timerReset').addEventListener('click', resetTimer);
+        document.getElementById('timerClose').addEventListener('click', () => {
+            pauseTimer();
+            document.getElementById('timerBar').classList.remove('active');
+        });
+
+        // Library search
+        document.getElementById('librarySearch').addEventListener('input', (e) => {
+            renderLibrary(e.target.value);
+        });
+
+        // Drop zone
+        const dz = document.getElementById('dropZone');
+        dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag-over'); });
+        dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+        dz.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dz.classList.remove('drag-over');
+            const text = e.dataTransfer.getData('text');
+            if (text) {
+                document.getElementById('urlInput').value = text;
+                submitUrl();
+            }
+        });
+
+        setupAutoSave();
+        updateStats();
+    }
+
+    function submitUrl() {
+        const url = document.getElementById('urlInput').value.trim();
+        if (!url) return;
+
+        if (isYouTubeUrl(url)) {
+            const videoId = parseYouTubeId(url);
+            const title = 'YouTube Video — ' + (videoId || 'Unknown');
+            createSession(url, 'video', title, '');
+            // Try to get video title via oEmbed
+            fetch('https://noembed.com/embed?url=' + encodeURIComponent(url))
+                .then(r => r.json())
+                .then(data => {
+                    if (data.title) {
+                        const s = currentSession();
+                        if (s) { s.title = data.title; saveState(); renderWorkspace(); }
+                    }
+                })
+                .catch(() => {});
+            showView('workspace');
+        } else {
+            const title = 'Article — ' + new URL(url).hostname;
+            createSession(url, 'article', title, 'Content from: ' + url + '\n\nTo get the full learning experience, paste the article content using the "Paste article text" option on the home screen, or copy the article text and add it to your notes.');
+            showView('workspace');
+        }
+        document.getElementById('urlInput').value = '';
+    }
+
+    // Initialize
+    init();
+    </script>
+</body>
+</html>
